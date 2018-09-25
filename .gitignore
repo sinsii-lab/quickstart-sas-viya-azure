@@ -43,3 +43,6 @@ Thumbs.db
 /bin/
 build
 docker
+
+# Pycharm IDE files #
+#####################

@@ -1,0 +1,248 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "0.1.0.0",
+  "parameters": {
+    "DeploymentDataLocation": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Path to the SAS License file. This should be a full http:// or https:// address including azure sas key "
+      }
+    },
+    "SSHPublicKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The full ssh public key that will be added to the servers."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "eastus"
+    },
+    "WebIngressLocation": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Allow inbound HTTP traffic to the SAS Viya Environment from this CIDR block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x."
+      }
+    },
+    "AdminIngressLocation": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Allow inbound SSH traffic to the Ansible Controller from this CIDR block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x."
+      }
+    },
+    "SASAdminPass": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Password of the SAS Admin Users (sasboot, optionally sasadmin). Must have at least 6 and no more than 255 characters."
+      }
+    },
+    "SASUserPass": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Password of the default SAS User (sasuser). If left empty, no default users are being created (WARNING: If not set, deployment will require additional setup steps before being usable)."
+      }
+    },
+    "DomainName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The SAS Viya Server portal will be reachable at this DNS name (blank = generated ELB name will be used as application DNS name)"
+      }
+    },
+    "TemplateStorageSASKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "For the purposes of connecting to private templates, a Shared Access Signature (or SAS, no relation), is needed to gain access to the template. This should be the URI append string that grants that authroization."
+      }
+    },
+    "AzureStorageFileBase": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "This is the https url to the base of the deployment files in azure. If a SAS key is needed, please do not include it in the url, but instead add the part after and including the question mark to the TemplateStorageSASKey variable. ex. https://<STORAGE_ACCOUNT>.file.core.windows.net/<SHARE_NAME>/<SUBDIRECTORY_NAME>"
+      }
+    }
+  },
+  "variables": {
+    "ChildTemplateURI": "[concat(parameters('AzureStorageFileBase'), '/sas-viya-in-existing-network/azuredeploy.json', parameters('TemplateStorageSASKey'))]",
+    "resourceGroupUniqueString": "[uniqueString(resourceGroup().id)]",
+    "VirtualNetworkName": "[concat(variables('resourceGroupUniqueString'), '_network')]",
+    "VirtualNetworkPrivateSubnet": "private",
+    "VirtualNetworkPrivateSubnetFull": "[concat(variables('VirtualNetworkName'), '/', variables('VirtualNetworkPrivateSubnet'))]",
+    "VirtualNetworkPublicSubnet": "public",
+    "VirtualNetworkPublicSubnetFull": "[concat(variables('VirtualNetworkName'), '/', variables('VirtualNetworkPublicSubnet'))]",
+    "VirtualNetworkApplicationGatewaySubnet": "ApplicationGatewaySubnet",
+    "VirtualNetworkApplicationGatewaySubnetFull": "[concat(variables('VirtualNetworkName'), '/', variables('VirtualNetworkApplicationGatewaySubnet'))]",
+    "LoadBalancerName": "PrimaryLoadBalancer"
+
+  },
+  "functions": [],
+  "resources": [
+
+    {
+      "name": "[variables('VirtualNetworkName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2017-10-01",
+      "location": "[parameters('location')]",
+      "tags": {},
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "properties": {
+              "addressPrefix": "10.0.127.0/24"
+            },
+            "name": "[variables('VirtualNetworkPrivateSubnet')]"
+          },
+          {
+            "properties": {
+              "addressPrefix": "10.0.128.0/24"
+            },
+            "name": "[variables('VirtualNetworkPublicSubnet')]"
+          },
+          {
+            "properties": {
+              "addressPrefix": "10.0.129.0/24"
+            },
+            "name": "[variables('VirtualNetworkApplicationGatewaySubnet')]"
+          }
+        ],
+        "enableDdosProtection": false,
+        "enableVmProtection": false
+      },
+      "resources": [
+      ]
+    },
+    {
+      "comments": "The private subnet of this stack's network.",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[variables('VirtualNetworkPrivateSubnetFull')]",
+      "apiVersion": "2018-02-01",
+      "scale": null,
+      "properties": {
+        "addressPrefix": "10.0.127.0/24"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('VirtualNetworkName'))]"
+      ]
+    },
+    {
+      "comments": "This is the public subnet for this stack's network.",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[variables('VirtualNetworkPublicSubnetFull')]",
+      "apiVersion": "2018-02-01",
+      "scale": null,
+      "properties": {
+        "addressPrefix": "10.0.128.0/24"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('VirtualNetworkName'))]"
+      ]
+    },
+    {
+      "comments": "This is the application gateway subnet for this stack's network.",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[variables('VirtualNetworkApplicationGatewaySubnetFull')]",
+      "apiVersion": "2018-02-01",
+      "scale": null,
+      "properties": {
+        "addressPrefix": "10.0.129.0/24"
+
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('VirtualNetworkName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2017-05-10",
+      "name": "ViyaDeployInExistingNetwork",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[variables('ChildTemplateURI')]",
+          "contentVersion": "0.1.0.0"
+        },
+        "parameters": {
+          "DeploymentDataLocation": {
+            "value": "[parameters('DeploymentDataLocation')]"
+          },
+          "SSHPublicKey": {
+            "value": "[parameters('SSHPublicKey')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "WebIngressLocation": {
+            "value": "[parameters('WebIngressLocation')]"
+          },
+          "AdminIngressLocation": {
+            "value": "[parameters('AdminIngressLocation')]"
+          },
+          "SASAdminPass": {
+            "value": "[parameters('SASAdminPass')]"
+          },
+          "SASUserPass": {
+            "value": "[parameters('SASUserPass')]"
+          },
+          "DomainName": {
+            "value": "[parameters('DomainName')]"
+          },
+          "TemplateStorageSASKey": {
+            "value": "[parameters('TemplateStorageSASKey')]"
+          },
+          "VirtualNetworkName": {
+            "value": "[variables('VirtualNetworkName')]"
+          },
+          "PrivateSubnetName": {
+            "value": "[variables('VirtualNetworkPrivateSubnet')]"
+          },
+          "PublicSubnetName": {
+            "value": "[variables('VirtualNetworkPublicSubnet')]"
+          },
+          "AzureStorageFileBase": {
+            "value": "[parameters('AzureStorageFileBase')]"
+          },
+          "ApplicationGatewaySubnetName": {
+            "value": "[variables('VirtualNetworkApplicationGatewaySubnet')]"
+          },
+          "privateSubnetCIDR": {
+            "value": "[reference(resourceId('Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkPrivateSubnet'))).addressPrefix]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('VirtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkPrivateSubnet'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkPublicSubnet'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkApplicationGatewaySubnet'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "AnsibleControllerIP": {
+       "type": "string",
+       "value": "[reference('ViyaDeployInExistingNetwork').outputs.AnsibleControllerIP.value]"
+     },
+    "SASDrive": {
+       "type": "string",
+       "value": "[reference('ViyaDeployInExistingNetwork').outputs.SASDrive.value]"
+     },
+    "SASStudio": {
+       "type": "string",
+       "value": "[reference('ViyaDeployInExistingNetwork').outputs.SASStudio.value]"
+     }
+
+  }
+}

@@ -1,0 +1,1929 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "0.1.0.0",
+  "parameters": {
+    "DeploymentDataLocation": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Path to the SAS License file."
+      }
+    },
+    "SSHPublicKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The full ssh public key that will be added to the servers."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "eastus",
+      "metadata": {
+        "description": "The location in azure that these resources should be created."
+      }
+    },
+    "WebIngressLocation": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Allow inbound HTTP traffic to the SAS Viya Environment from this CIDR block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x."
+      }
+    },
+    "AdminIngressLocation": {
+      "type": "string",
+      "defaultValue": "149.173.0.0/16",
+      "metadata": {
+        "description": "Allow inbound SSH traffic to the Ansible Controller from this CIDR block (IP address range). Must be a valid IP CIDR range of the form x.x.x.x/x."
+      }
+    },
+    "SASAdminPass": {
+      "type": "string",
+      "defaultValue": "sasadmin1",
+      "metadata": {
+        "description": "Password of the SAS Admin Users (sasboot, optionally sasadmin). Must have at least 6 and no more than 255 characters."
+      }
+    },
+    "SASUserPass": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Password of the default SAS User (sasuser). If left empty, no default users are being created (WARNING: If not set, deployment will require additional setup steps before being usable)."
+      }
+    },
+    "OperatorEmail": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Email address to send a notification about deployment success or failure (optional)."
+      }
+    },
+    "DomainName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The SAS Viya Server portal will be reachable at this DNS name (blank = generated ELB name will be used as application DNS name)"
+      }
+    },
+    "TemplateStorageSASKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "For the purposes of connecting to private templates, a Shared Access Signature (or SAS, no relation), is needed to gain access to the template. This should be the URI append string that grants that authroization."
+      }
+    },
+    "VirtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of an exsisting virtual network to use."
+      }
+    },
+    "PrivateSubnetName": {
+      "type": "string",
+      "defaultValue": "private",
+      "metadata": {
+        "description": "The name of the private subnet under the existing virtual network to use. (defaults to 'private')"
+      }
+    },
+    "PublicSubnetName": {
+      "type": "string",
+      "defaultValue": "public",
+      "metadata": {
+        "description": "The name of the public subnet under the existing virtual network to use. (defaults to 'public')"
+      }
+    },
+    "ApplicationGatewaySubnetName": {
+      "type": "string",
+      "defaultValue": "Applciation",
+      "metadata": {
+        "description": "The name of the subnet to host the application gateway under the existing virtual network to use. (defaults to 'public')"
+      }
+    },
+    "privateSubnetCIDR": {
+      "type": "string",
+      "defaultValue": "10.0.127.0/24",
+      "metadata": {
+        "description": "The name of the subnet to host the application gateway under the existing virtual network to use. (defaults to 'public')"
+      }
+    },
+    "AzureStorageFileBase": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "This is the https url to the base of the deployment files in azure. If a SAS key is needed, please do not include it in the url, but instead add the part after and including the question mark to the TemplateStorageSASKey variable. ex. https://<STORAGE_ACCOUNT>.file.core.windows.net/<SHARE_NAME>/<SUBDIRECTORY_NAME>"
+      }
+    }
+  },
+  "variables": {
+    "resourceGroupUniqueString": "[uniqueString(resourceGroup().id)]",
+    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('VirtualNetworkName'))]",
+    "privateSubnetRef": "[resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', parameters('VirtualNetworkName'), parameters('PrivateSubnetName'))]",
+    "publicSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('VirtualNetworkName'), parameters('PublicSubnetName'))]",
+    "ApplicationGatewaySubnetNameRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('VirtualNetworkName'), parameters('ApplicationGatewaySubnetName'))]",
+    "LoadBalancerName": "PrimaryViyaLoadbalancer",
+    "AnsibleController_name": "Ansible",
+    "AnsibleController_VMsize": "Standard_B1s",
+    "CASController_name": "CAS",
+    "Services_VMsize": "Standard_E8s_v3",
+    "StatefulServices_name": "Stateful",
+    "ProgrammingServices_name": "Programming",
+    "VisualServices_name": "Visual",
+    "DiagnosticStorageGroupName": "[toLower(concat('rg4diag', variables('resourceGroupUniqueString')))]",
+    "PrimaryUserName": "sas_base",
+    "ExtensionAnsibleURI": "[concat(parameters('AzureStorageFileBase'), '/sas-viya-in-existing-network/nestedtemplates/run_ansible_script.json', parameters('TemplateStorageSASKey'))]",
+    "AlternateDomain": "[concat('viya-', subscription().subscriptionId, '-', variables('resourceGroupUniqueString'))]",
+    "DomainActual": "[ if(empty(parameters('DomainName')), substring(variables('AlternateDomain'),0,if(lessOrEquals(length(variables('AlternateDomain')),60), length(variables('AlternateDomain')), 60)), parameters('DomainName')) ]",
+    "Base64AdminPass": "[base64(parameters('SASAdminPass'))]",
+    "Base64UserPass": "[base64(parameters('SASUserPass'))]"
+  },
+  "functions": [],
+  "resources": [
+    {
+      "comments": "The public ip address for the Load ballancer. Should be the only public ip outside of the ansible controler",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "sku": {
+        "name": "Basic",
+        "tier": "Regional"
+      },
+      "name": "[concat(variables('LoadBalancerName'), '_PublicIP')]",
+      "apiVersion": "2018-02-01",
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded",
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Dynamic",
+        "idleTimeoutInMinutes": 4,
+        "ipTags": [],
+        "dnsSettings": {
+          "domainNameLabel": "[variables('DomainActual')]"
+        }
+      },
+      "dependsOn": []
+    },
+    {
+      "comments": "The primary network security group of the ansible controller",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[concat(variables('LoadBalancerName'), '_NetworkSecurityGroup')]",
+      "apiVersion": "2018-02-01",
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded",
+        "securityRules": [
+          {
+            "name": "allow-https",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "[parameters('WebIngressLocation')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "allow-backend-health",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRange": "65503-65534",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1001,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ],
+        "defaultSecurityRules": [
+          {
+            "name": "AllowVnetInBound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Allow inbound traffic from all VMs in VNET",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 65000,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowAzureLoadBalancerInBound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Allow inbound traffic from azure load balancer",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "AzureLoadBalancer",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 65001,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "DenyAllInBound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Deny all inbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 65500,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowVnetOutBound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 65000,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowInternetOutBound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Allow outbound traffic from all VMs to Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Allow",
+              "priority": 65001,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "DenyAllOutBound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Deny all outbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 65500,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ]
+      },
+      "dependsOn": []
+    },
+
+    {
+      "apiVersion": "2017-08-01",
+      "name": "updateApplicationGatewaySubnet",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('LoadBalancerName'), '_NetworkSecurityGroup'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('AzureStorageFileBase'), concat('/sas-viya-in-existing-network/nestedtemplates/update_application_gateway_subnet.json', parameters('TemplateStorageSASKey')))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "virtualNetworkName": {
+            "value": "[parameters('VirtualNetworkName')]"
+          },
+          "subnetName": {
+            "value": "[parameters('ApplicationGatewaySubnetName')]"
+          },
+          "subnetAddressPrefix": {
+            "value": "[reference(resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', parameters('VirtualNetworkName'), parameters('ApplicationGatewaySubnetName')), '2018-03-01').addressPrefix]"
+          },
+          "nsgId": {
+            "value": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('LoadBalancerName'), '_NetworkSecurityGroup'))]"
+          }
+        }
+      }
+},
+    {
+      "comments": "The primary application gateway for the viya quickstart.",
+      "type": "Microsoft.Network/applicationGateways",
+      "name": "[variables('LoadBalancerName')]",
+      "apiVersion": "2018-02-01",
+      "location": "eastus",
+      "scale": null,
+      "properties": {
+        "sku": {
+          "name": "Standard_Small",
+          "tier": "Standard",
+          "capacity": 1
+        },
+        "gatewayIPConfigurations": [
+          {
+            "name": "appGatewayIpConfig",
+            "properties": {
+              "subnet": {
+                "id": "[variables('ApplicationGatewaySubnetNameRef')]"
+              }
+            },
+            "type": "Microsoft.Network/applicationGateways/gatewayIPConfigurations"
+          }
+        ],
+        "sslCertificates": [
+          {
+            "name": "appGatewayFrontendCertificate",
+            "properties": {
+              "data": "[json(concat(split(reference('AnsiblePhase3GetLBCertPart1').outputs.instanceView.value.statuses[0].message, '#DATA#')[1],split(reference('AnsiblePhase4GetLBCertPart2').outputs.instanceView.value.statuses[0].message, '#DATA#')[1])).data]",
+              "password": "[json(concat(split(reference('AnsiblePhase3GetLBCertPart1').outputs.instanceView.value.statuses[0].message, '#DATA#')[1],split(reference('AnsiblePhase4GetLBCertPart2').outputs.instanceView.value.statuses[0].message, '#DATA#')[1])).password]"
+            },
+            "type": "Microsoft.Network/applicationGateways/sslCertificates"
+          }
+        ],
+        "authenticationCertificates": [
+          {
+            "name": "viya-ca.cer",
+            "properties": {
+              "data": "[split(reference('AnsiblePhase6GetCACert').outputs.instanceView.value.statuses[0].message, '#DATA#')[1]]"
+            },
+            "type": "Microsoft.Network/applicationGateways/authenticationCertificates"
+          }
+        ],
+        "frontendIPConfigurations": [
+          {
+            "name": "appGatewayFrontendIP",
+            "type": "Microsoft.Network/applicationGateways/frontendIPConfigurations",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))]"
+              }
+            }
+          }
+        ],
+        "frontendPorts": [
+          {
+            "name": "appGatewayFrontendPort",
+            "properties": {
+              "port": 443
+            },
+            "type": "Microsoft.Network/applicationGateways/frontendPorts"
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "appGatewayBackendPool",
+            "properties": {
+              "backendAddresses": [
+                {
+                  "IpAddress": "[reference(resourceId('Microsoft.Network/networkInterfaces', 'ProgrammingServices_NetworkInterface')).ipConfigurations[0].properties.privateIPAddress]"
+                },
+                {
+                  "IpAddress": "[reference(resourceId('Microsoft.Network/networkInterfaces', 'VisualServices_NetworkInterface')).ipConfigurations[0].properties.privateIPAddress]"
+                },
+                {
+                  "IpAddress": "[reference(resourceId('Microsoft.Network/networkInterfaces', 'StatefulServices_NetworkInterface')).ipConfigurations[0].properties.privateIPAddress]"
+                }
+              ]
+            },
+            "type": "Microsoft.Network/applicationGateways/backendAddressPools"
+          }
+        ],
+        "backendHttpSettingsCollection": [
+          {
+            "name": "appGatewayBackendHttpSettings",
+            "properties": {
+              "port": 443,
+              "protocol": "Https",
+              "cookieBasedAffinity": "Disabled",
+              "pickHostNameFromBackendAddress": false,
+              "requestTimeout": 30,
+              "authenticationCertificates": [
+                {
+                  "id": "[resourceId('Microsoft.Network/applicationGateways/authenticationCertificates', variables('LoadBalancerName'), 'viya-ca.cer')]"
+                }
+              ]
+            },
+            "type": "Microsoft.Network/applicationGateways/backendHttpSettingsCollection"
+          }
+        ],
+        "httpListeners": [
+          {
+            "name": "appGatewayHttpListener",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', variables('LoadBalancerName'), 'appGatewayFrontendIP')]"
+              },
+              "frontendPort": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', variables('LoadBalancerName'), 'appGatewayFrontendPort')]"
+              },
+              "protocol": "Https",
+              "sslCertificate": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/sslCertificates', variables('LoadBalancerName'), 'appGatewayFrontendCertificate')]"
+              },
+              "requireServerNameIndication": false
+            },
+            "type": "Microsoft.Network/applicationGateways/httpListeners"
+          }
+        ],
+        "urlPathMaps": [],
+        "requestRoutingRules": [
+          {
+            "name": "rule1",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "ruleType": "Basic",
+              "httpListener": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', variables('LoadBalancerName'), 'appGatewayHttpListener')]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', variables('LoadBalancerName'), 'appGatewayBackendPool')]"
+              },
+              "backendHttpSettings": {
+                "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', variables('LoadBalancerName'), 'appGatewayBackendHttpSettings')]"
+              }
+            },
+            "type": "Microsoft.Network/applicationGateways/requestRoutingRules"
+          }
+        ],
+        "probes": [],
+        "redirectConfigurations": [],
+        "enableHttp2": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', 'ProgrammingServices_NetworkInterface')]",
+        "[resourceId('Microsoft.Network/networkInterfaces', 'VisualServices_NetworkInterface')]",
+        "[resourceId('Microsoft.Network/networkInterfaces', 'StatefulServices_NetworkInterface')]",
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('StatefulServices_name'))]",
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('VisualServices_name'))]",
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('ProgrammingServices_name'))]"
+      ]
+    },
+    {
+      "comments": "The primary network security group of the ansible controller",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "AnsibleController_NetworkSecurityGroup",
+      "apiVersion": "2018-02-01",
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded",
+        "securityRules": [
+          {
+            "name": "allow-ssh",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "[parameters('AdminIngressLocation')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ],
+        "defaultSecurityRules": [
+          {
+            "name": "AllowVnetInBound",
+            "properties": {
+              "description": "Allow inbound traffic from all VMs in VNET",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 65000,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowAzureLoadBalancerInBound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Allow inbound traffic from azure load balancer",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "AzureLoadBalancer",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 65001,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "DenyAllInBound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Deny all inbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 65500,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowVnetOutBound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 65000,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowInternetOutBound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Allow outbound traffic from all VMs to Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Allow",
+              "priority": 65001,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "DenyAllOutBound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Deny all outbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 65500,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ]
+      },
+      "dependsOn": []
+    },
+    {
+      "comments": "The public ip address for the ansible controller. Should be the only public ip outside of the load ballancer",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "sku": {
+        "name": "Basic",
+        "tier": "Regional"
+      },
+      "name": "AnsibleController_PublicIP",
+      "apiVersion": "2018-02-01",
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded",
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Static",
+        "idleTimeoutInMinutes": 4,
+        "ipTags": []
+      },
+      "dependsOn": []
+    },
+    {
+      "comments": "The network interface of the ansible controller. This will be accessable to the public within the bounds of the security groups.",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "AnsibleController_NetworkInterface",
+      "apiVersion": "2018-02-01",
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded",
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'AnsibleController_PublicIP')]"
+              },
+              "subnet": {
+                "id": "[variables('publicSubnetRef')]"
+              },
+              "primary": true,
+              "privateIPAddressVersion": "IPv4",
+              "applicationSecurityGroups": [
+                {
+                  "id": "[resourceId('Microsoft.Network/applicationSecurityGroups', 'github-accessor')]"
+                }
+              ]
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": [],
+          "appliedDnsServers": []
+        },
+        "enableAcceleratedNetworking": false,
+        "enableIPForwarding": false,
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'AnsibleController_NetworkSecurityGroup')]"
+        },
+        "primary": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'AnsibleController_PublicIP')]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'AnsibleController_NetworkSecurityGroup')]",
+        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'github-accessor')]"
+      ]
+    },
+    {
+      "comments": "The ansible controler and bastion server for this environment.",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('AnsibleController_name')]",
+      "apiVersion": "2017-12-01",
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('AnsibleController_VMsize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "RedHat",
+            "offer": "RHEL",
+            "sku": "7.2",
+            "version": "latest"
+          },
+          "osDisk": {
+            "osType": "Linux",
+            "name": "[concat(variables('AnsibleController_name'),'_OsDisk_1')]",
+            "createOption": "FromImage",
+            "caching": "ReadWrite",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            },
+            "diskSizeGB": 32
+          },
+          "dataDisks": []
+        },
+        "osProfile": {
+          "computerName": "[variables('AnsibleController_name')]",
+          "adminUsername": "[variables('PrimaryUserName')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', variables('PrimaryUserName'), '/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('SSHPublicKey')]"
+                }
+              ]
+            }
+          },
+          "secrets": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'AnsibleController_NetworkInterface')]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[concat('https', '://', variables('DiagnosticStorageGroupName'), '.blob.core.windows.net', '/')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', 'AnsibleController_NetworkInterface')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('DiagnosticStorageGroupName'))]"
+      ],
+      "resources": [
+      ]
+    },
+    {
+      "name": "AnsiblePhase1SetupHostForAnsible",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-05-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('AnsibleController_name'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('ExtensionAnsibleURI')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmName": {
+            "value": "[variables('AnsibleController_name')]"
+          },
+          "commandToExecute": {
+            "value": "[concat('./ansiblecontroller_startup.sh \"1\" \"', parameters('AzureStorageFileBase'), '\" \"', parameters('TemplateStorageSASKey'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', parameters('privateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" > /tmp/runAnsiblePhase1_SetupPrerequisites.log')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('AzureStorageFileBase')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('TemplateStorageSASKey')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "AnsiblePhase2GetCASSizingFromLicense",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-05-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase1SetupHostForAnsible')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('ExtensionAnsibleURI')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmName": {
+            "value": "[variables('AnsibleController_name')]"
+          },
+          "commandToExecute": {
+            "value": "[concat('./ansiblecontroller_startup.sh \"2\" \"', parameters('AzureStorageFileBase'), '\" \"', parameters('TemplateStorageSASKey'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', parameters('privateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" | tee /tmp/runAnsiblePhase2_ReturnCasSize.log')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('AzureStorageFileBase')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('TemplateStorageSASKey')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "AnsiblePhase3GetLBCertPart1",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-05-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase2GetCASSizingFromLicense')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('ExtensionAnsibleURI')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmName": {
+            "value": "[variables('AnsibleController_name')]"
+          },
+          "commandToExecute": {
+            "value": "[concat('./ansiblecontroller_startup.sh \"3\" \"', parameters('AzureStorageFileBase'), '\" \"', parameters('TemplateStorageSASKey'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', parameters('privateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" | tee /tmp/runAnsiblePhase3_CertificateExport_1.log')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('AzureStorageFileBase')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('TemplateStorageSASKey')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "AnsiblePhase4GetLBCertPart2",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-05-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase3GetLBCertPart1')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('ExtensionAnsibleURI')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmName": {
+            "value": "[variables('AnsibleController_name')]"
+          },
+          "commandToExecute": {
+            "value": "[concat('./ansiblecontroller_startup.sh \"4\" \"', parameters('AzureStorageFileBase'), '\" \"', parameters('TemplateStorageSASKey'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', parameters('privateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" | tee /tmp/runAnsiblePhase4_CertificateExport_2.log')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('AzureStorageFileBase')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('TemplateStorageSASKey')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "AnsiblePhase6GetCACert",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-05-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase5PreViyaInstall')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('ExtensionAnsibleURI')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmName": {
+            "value": "[variables('AnsibleController_name')]"
+          },
+          "commandToExecute": {
+            "value": "[concat('./ansiblecontroller_startup.sh \"6\" \"', parameters('AzureStorageFileBase'), '\" \"', parameters('TemplateStorageSASKey'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', parameters('privateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" | tee /tmp/runAnsiblePhase6_SAS_CA_CRT.log')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('AzureStorageFileBase')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('TemplateStorageSASKey')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "AnsiblePhase5PreViyaInstall",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-05-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase4GetLBCertPart2')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('ExtensionAnsibleURI')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmName": {
+            "value": "[variables('AnsibleController_name')]"
+          },
+          "commandToExecute": {
+            "value": "[concat('./ansiblecontroller_startup.sh \"5\" \"', parameters('AzureStorageFileBase'), '\" \"', parameters('TemplateStorageSASKey'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', parameters('privateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" > /tmp/runAnsiblePhase5_PRE_INSTALL.log')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('AzureStorageFileBase')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('TemplateStorageSASKey')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "AnsiblePhase7RunViyaInstall",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-05-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase6GetCACert')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('ExtensionAnsibleURI')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmName": {
+            "value": "[variables('AnsibleController_name')]"
+          },
+          "commandToExecute": {
+            "value": "[concat('./ansiblecontroller_startup.sh \"7\" \"', parameters('AzureStorageFileBase'), '\" \"', parameters('TemplateStorageSASKey'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', parameters('privateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" > /tmp/runAnsiblePhase7_SAS_INSTALL.log')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('AzureStorageFileBase')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('TemplateStorageSASKey')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "AnsiblePhase8PostViyaInstall",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-05-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase7RunViyaInstall')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('ExtensionAnsibleURI')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmName": {
+            "value": "[variables('AnsibleController_name')]"
+          },
+          "commandToExecute": {
+            "value": "[concat('./ansiblecontroller_startup.sh \"8\" \"', parameters('AzureStorageFileBase'), '\" \"', parameters('TemplateStorageSASKey'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', parameters('privateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" > /tmp/runAnsiblePhase8_POST_INSTALL.log')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('AzureStorageFileBase')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('TemplateStorageSASKey')]"
+          }
+        }
+      }
+    },
+    {
+      "comments": "The network interface of the ansible controller. This will be accessable to the public within the bounds of the security groups.",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "CASController_NetworkInterface",
+      "apiVersion": "2018-02-01",
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded",
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('privateSubnetRef')]"
+              },
+              "primary": true,
+              "privateIPAddressVersion": "IPv4",
+              "applicationSecurityGroups": [
+                {
+                  "id": "[resourceId('Microsoft.Network/applicationSecurityGroups', 'github-accessor')]"
+                },
+                {
+                  "id": "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-services-accessor')]"
+                },
+                {
+                  "id": "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-viya-provider')]"
+                }
+              ]
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": [],
+          "appliedDnsServers": []
+        },
+        "enableAcceleratedNetworking": false,
+        "enableIPForwarding": false,
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'Viya_NetworkSecurityGroup')]"
+        },
+        "primary": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'Viya_NetworkSecurityGroup')]",
+        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'github-accessor')]",
+        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-services-accessor')]",
+        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-viya-provider')]"
+      ]
+    },
+    {
+      "comments": "Diagnostic storage group for the sas stack",
+      "type": "Microsoft.Storage/storageAccounts",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "Storage",
+      "name": "[variables('DiagnosticStorageGroupName')]",
+      "apiVersion": "2018-02-01",
+      "location": "[parameters('location')]",
+      "tags": {},
+      "scale": null,
+      "properties": {
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "virtualNetworkRules": [],
+          "ipRules": [],
+          "defaultAction": "Allow"
+        },
+        "supportsHttpsTrafficOnly": false,
+        "encryption": {
+          "services": {
+            "file": {
+              "enabled": true
+            },
+            "blob": {
+              "enabled": true
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        }
+      },
+      "dependsOn": []
+    },
+    {
+      "comments": "The cas controler for this environment.",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('CASController_name')]",
+      "apiVersion": "2018-04-01",
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[json(split(reference('AnsiblePhase2GetCASSizingFromLicense').outputs.instanceView.value.statuses[0].message, '#DATA#')[1]).CAS_VM_SIZE]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "RedHat",
+            "offer": "RHEL",
+            "sku": "7.2",
+            "version": "latest"
+          },
+          "osDisk": {
+            "osType": "Linux",
+            "name": "[concat(variables('CASController_name'),'_OsDisk_1')]",
+            "createOption": "FromImage",
+            "caching": "ReadWrite",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            },
+            "diskSizeGB": 32
+          },
+          "dataDisks": [
+            {
+              "lun": 0,
+              "name": "[concat(variables('CASController_name'),'OptDisk')]",
+              "createOption": "Empty",
+              "managedDisk": {
+                "storageAccountType": "Premium_LRS"
+              },
+              "diskSizeGB": 50
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "[variables('CASController_name')]",
+          "adminUsername": "[variables('PrimaryUserName')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', variables('PrimaryUserName'), '/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('SSHPublicKey')]"
+                }
+              ]
+            }
+          },
+          "secrets": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'CASController_NetworkInterface')]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[concat('https', '://', variables('DiagnosticStorageGroupName'), '.blob.core.windows.net', '/')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', 'CASController_NetworkInterface')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('DiagnosticStorageGroupName'))]",
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase2GetCASSizingFromLicense')]"
+      ],
+      "resources": [
+      ]
+    },
+    {
+      "name": "[concat(variables('CASController_name'), '/CASStartup')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-12-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('CASController_name'))]",
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('AnsibleController_name'))]",
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase2GetCASSizingFromLicense')]"
+      ],
+      "tags": {
+        "displayName": "config-app"
+      },
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "skipDos2Unix": false
+        },
+        "protectedSettings": {
+          "commandToExecute": "[ concat('./nonansiblecontroller_prereqs.sh \"', variables('PrimaryUserName'), '\" \"', variables('AnsibleController_name'),'\" \"CasControllerServers\" > /tmp/proofIRan.log')]",
+          "fileUris": [
+            "[concat(parameters('AzureStorageFileBase'), '/sas-viya-in-existing-network/scripts/nonansiblecontroller_prereqs.sh', parameters('TemplateStorageSASKey'))]"
+          ]
+        }
+      }
+    },
+    {
+      "comments": "The network interface of the stateful services box. This will be accessable to the public within the bounds of the security groups.",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "StatefulServices_NetworkInterface",
+      "apiVersion": "2018-02-01",
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded",
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('privateSubnetRef')]"
+              },
+              "primary": true,
+              "privateIPAddressVersion": "IPv4",
+              "applicationSecurityGroups": [
+                {
+                  "id": "[resourceId('Microsoft.Network/applicationSecurityGroups', 'github-accessor')]"
+                },
+                {
+                  "id": "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-services-provider')]"
+                },
+                {
+                  "id": "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-viya-accessor')]"
+                }
+              ]
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": [],
+          "appliedDnsServers": []
+        },
+        "enableAcceleratedNetworking": false,
+        "enableIPForwarding": false,
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'Viya_NetworkSecurityGroup')]"
+        },
+        "primary": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'Viya_NetworkSecurityGroup')]",
+        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'github-accessor')]",
+        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-services-provider')]",
+        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-viya-accessor')]"
+      ]
+    },
+    {
+      "comments": "The stateful services and bastion server for this environment.",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('StatefulServices_name')]",
+      "apiVersion": "2017-12-01",
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('Services_VMsize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "RedHat",
+            "offer": "RHEL",
+            "sku": "7.2",
+            "version": "latest"
+          },
+          "osDisk": {
+            "osType": "Linux",
+            "name": "[concat(variables('StatefulServices_name'),'_OsDisk_1')]",
+            "createOption": "FromImage",
+            "caching": "ReadWrite",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            },
+            "diskSizeGB": 32
+          },
+          "dataDisks": [
+            {
+              "lun": 0,
+              "name": "[concat(variables('StatefulServices_name'),'OptDisk')]",
+              "createOption": "Empty",
+              "managedDisk": {
+                "storageAccountType": "Premium_LRS"
+              },
+              "diskSizeGB": 50
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "[variables('StatefulServices_name')]",
+          "adminUsername": "[variables('PrimaryUserName')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', variables('PrimaryUserName'), '/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('SSHPublicKey')]"
+                }
+              ]
+            }
+          },
+          "secrets": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'StatefulServices_NetworkInterface')]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[concat('https', '://', variables('DiagnosticStorageGroupName'), '.blob.core.windows.net', '/')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', 'StatefulServices_NetworkInterface')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('DiagnosticStorageGroupName'))]"
+      ],
+      "resources": [
+      ]
+    },
+    {
+      "name": "[concat(variables('StatefulServices_name'), '/StatefulServicesStartup')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-12-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('StatefulServices_name'))]",
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('AnsibleController_name'))]",
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase2GetCASSizingFromLicense')]"
+      ],
+      "tags": {
+        "displayName": "config-app"
+      },
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "skipDos2Unix": false
+        },
+        "protectedSettings": {
+          "commandToExecute": "[ concat('./nonansiblecontroller_prereqs.sh \"', variables('PrimaryUserName'), '\" \"', variables('AnsibleController_name'),'\" \"StatefulServicesServers\" > /tmp/proofIRan.log')]",
+          "fileUris": [
+            "[concat(parameters('AzureStorageFileBase'), '/sas-viya-in-existing-network/scripts/nonansiblecontroller_prereqs.sh', parameters('TemplateStorageSASKey'))]"
+          ]
+        }
+      }
+    },
+    {
+      "comments": "The primary network security group of the various Services and Viya.",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "Viya_NetworkSecurityGroup",
+      "apiVersion": "2018-02-01",
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded",
+        "securityRules": [],
+        "defaultSecurityRules": [
+          {
+            "name": "AllowVnetInBound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Allow inbound traffic from all VMs in VNET",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 65000,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowAzureLoadBalancerInBound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Allow inbound traffic from azure load balancer",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "AzureLoadBalancer",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 65001,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "DenyAllInBound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Deny all inbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 65500,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowVnetOutBound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 65000,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowInternetOutBound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Allow outbound traffic from all VMs to Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Allow",
+              "priority": 65001,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "DenyAllOutBound",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Deny all outbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 65500,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ]
+      },
+      "dependsOn": []
+    },
+    {
+      "comments": "The network interface of the programing Services. This will be accessable to the public within the bounds of the security groups.",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "ProgrammingServices_NetworkInterface",
+      "apiVersion": "2018-02-01",
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded",
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('privateSubnetRef')]"
+              },
+              "primary": true,
+              "privateIPAddressVersion": "IPv4",
+              "applicationSecurityGroups": [
+                {
+                  "id": "[resourceId('Microsoft.Network/applicationSecurityGroups', 'github-accessor')]"
+                },
+                {
+                  "id": "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-services-provider')]"
+                },
+                {
+                  "id": "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-viya-accessor')]"
+                }
+              ]
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": [],
+          "appliedDnsServers": []
+        },
+        "enableAcceleratedNetworking": false,
+        "enableIPForwarding": false,
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'Viya_NetworkSecurityGroup')]"
+        },
+        "primary": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'Viya_NetworkSecurityGroup')]",
+        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'github-accessor')]",
+        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-services-provider')]",
+        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-viya-accessor')]"
+      ]
+    },
+    {
+      "comments": "The programing services server for this environment.",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('ProgrammingServices_name')]",
+      "apiVersion": "2017-12-01",
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('Services_VMsize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "RedHat",
+            "offer": "RHEL",
+            "sku": "7.2",
+            "version": "latest"
+          },
+          "osDisk": {
+            "osType": "Linux",
+            "name": "[concat(variables('ProgrammingServices_name'),'_OsDisk_1')]",
+            "createOption": "FromImage",
+            "caching": "ReadWrite",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            },
+            "diskSizeGB": 32
+          },
+          "dataDisks": [
+            {
+              "lun": 0,
+              "name": "[concat(variables('ProgrammingServices_name'),'OptDisk')]",
+              "createOption": "Empty",
+              "managedDisk": {
+                "storageAccountType": "Premium_LRS"
+              },
+              "diskSizeGB": 50
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "[variables('ProgrammingServices_name')]",
+          "adminUsername": "[variables('PrimaryUserName')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', variables('PrimaryUserName'), '/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('SSHPublicKey')]"
+                }
+              ]
+            }
+          },
+          "secrets": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'ProgrammingServices_NetworkInterface')]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[concat('https', '://', variables('DiagnosticStorageGroupName'), '.blob.core.windows.net', '/')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', 'ProgrammingServices_NetworkInterface')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('DiagnosticStorageGroupName'))]"
+      ],
+      "resources": [
+      ]
+    },
+    {
+      "name": "[concat(variables('ProgrammingServices_name'), '/ProgramingServicesStartup')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-12-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('ProgrammingServices_name'))]",
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('AnsibleController_name'))]",
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase2GetCASSizingFromLicense')]"
+      ],
+      "tags": {
+        "displayName": "config-app"
+      },
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "skipDos2Unix": false
+        },
+        "protectedSettings": {
+          "commandToExecute": "[ concat('./nonansiblecontroller_prereqs.sh \"', variables('PrimaryUserName'), '\" \"', variables('AnsibleController_name'),'\" \"ProgrammingServicesServers\" > /tmp/proofIRan.log')]",
+          "fileUris": [
+            "[concat(parameters('AzureStorageFileBase'), '/sas-viya-in-existing-network/scripts/nonansiblecontroller_prereqs.sh', parameters('TemplateStorageSASKey'))]"
+          ]
+        }
+      }
+    },
+    {
+      "comments": "The network interface of the ansible controller. This will be accessible to the public within the bounds of the security groups.",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "VisualServices_NetworkInterface",
+      "apiVersion": "2018-02-01",
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded",
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('privateSubnetRef')]"
+              },
+              "primary": true,
+              "privateIPAddressVersion": "IPv4",
+              "applicationSecurityGroups": [
+                {
+                  "id": "[resourceId('Microsoft.Network/applicationSecurityGroups', 'github-accessor')]"
+                },
+                {
+                  "id": "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-services-provider')]"
+                },
+                {
+                  "id": "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-viya-accessor')]"
+                }
+              ]
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": [],
+          "appliedDnsServers": []
+        },
+        "enableAcceleratedNetworking": false,
+        "enableIPForwarding": false,
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'Viya_NetworkSecurityGroup')]"
+        },
+        "primary": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', 'Viya_NetworkSecurityGroup')]",
+        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'github-accessor')]",
+        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-services-provider')]",
+        "[resourceId('Microsoft.Network/applicationSecurityGroups', 'sas-viya-accessor')]"
+      ]
+    },
+    {
+      "comments": "The visual services server for this environment.",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('VisualServices_name')]",
+      "apiVersion": "2017-12-01",
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('Services_VMsize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "RedHat",
+            "offer": "RHEL",
+            "sku": "7.2",
+            "version": "latest"
+          },
+          "osDisk": {
+            "osType": "Linux",
+            "name": "[concat(variables('VisualServices_name'),'_OsDisk_1')]",
+            "createOption": "FromImage",
+            "caching": "ReadWrite",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            },
+            "diskSizeGB": 32
+          },
+          "dataDisks": [
+            {
+              "lun": 0,
+              "name": "[concat(variables('VisualServices_name'),'OptDisk')]",
+              "createOption": "Empty",
+              "managedDisk": {
+                "storageAccountType": "Premium_LRS"
+              },
+              "diskSizeGB": 50
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "[variables('VisualServices_name')]",
+          "adminUsername": "[variables('PrimaryUserName')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', variables('PrimaryUserName'), '/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('SSHPublicKey')]"
+                }
+              ]
+            }
+          },
+          "secrets": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'VisualServices_NetworkInterface')]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[concat('https', '://', variables('DiagnosticStorageGroupName'), '.blob.core.windows.net', '/')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', 'VisualServices_NetworkInterface')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('DiagnosticStorageGroupName'))]"
+      ],
+      "resources": [
+      ]
+    },
+    {
+      "name": "[concat(variables('VisualServices_name'), '/VisualServicesStartup')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-12-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('VisualServices_name'))]",
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('AnsibleController_name'))]",
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase2GetCASSizingFromLicense')]"
+      ],
+      "tags": {
+        "displayName": "config-app"
+      },
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "skipDos2Unix": false
+        },
+        "protectedSettings": {
+          "commandToExecute": "[ concat('./nonansiblecontroller_prereqs.sh \"', variables('PrimaryUserName'), '\" \"', variables('AnsibleController_name'),'\" \"VisualServicesServers\" > /tmp/proofIRan.log')]",
+          "fileUris": [
+            "[concat(parameters('AzureStorageFileBase'), '/sas-viya-in-existing-network/scripts/nonansiblecontroller_prereqs.sh', parameters('TemplateStorageSASKey'))]"
+          ]
+        }
+      }
+    },
+    {
+      "comments": "Application security group for those servers that require access to github",
+      "type": "Microsoft.Network/applicationSecurityGroups",
+      "name": "github-accessor",
+      "apiVersion": "2018-02-01",
+      "location": "[parameters('location')]",
+      "tags": {},
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded"
+      },
+      "dependsOn": []
+    },
+    {
+      "comments": "Application security group for those servers that require access to github",
+      "type": "Microsoft.Network/applicationSecurityGroups",
+      "name": "sas-services-accessor",
+      "apiVersion": "2018-02-01",
+      "location": "[parameters('location')]",
+      "tags": {},
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded"
+      },
+      "dependsOn": []
+    },
+    {
+      "comments": "Application security group for those servers that require access to github",
+      "type": "Microsoft.Network/applicationSecurityGroups",
+      "name": "sas-services-provider",
+      "apiVersion": "2018-02-01",
+      "location": "[parameters('location')]",
+      "tags": {},
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded"
+      },
+      "dependsOn": []
+    },
+    {
+      "comments": "Application security group for those servers that require access to github",
+      "type": "Microsoft.Network/applicationSecurityGroups",
+      "name": "sas-viya-accessor",
+      "apiVersion": "2018-02-01",
+      "location": "[parameters('location')]",
+      "tags": {},
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded"
+      },
+      "dependsOn": []
+    },
+    {
+      "comments": "Application security group for those servers that require access to github",
+      "type": "Microsoft.Network/applicationSecurityGroups",
+      "name": "sas-viya-provider",
+      "apiVersion": "2018-02-01",
+      "location": "[parameters('location')]",
+      "tags": {},
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded"
+      },
+      "dependsOn": []
+    }
+  ],
+  "outputs": {
+     "AnsibleControllerIP": {
+       "type": "string",
+       "value": "[reference('AnsibleController_PublicIP').ipAddress]"
+     },
+    "SASDrive": {
+       "type": "string",
+       "value": "[concat('https://', reference(concat(variables('LoadBalancerName'), '_PublicIP')).dnsSettings.fqdn, json(split(reference('AnsiblePhase2GetCASSizingFromLicense').outputs.instanceView.value.statuses[0].message, '#DATA#')[1]).SAS_DRIVE)]"
+     },
+    "SASStudio": {
+       "type": "string",
+       "value": "[concat('https://', reference(concat(variables('LoadBalancerName'), '_PublicIP')).dnsSettings.fqdn, json(split(reference('AnsiblePhase2GetCASSizingFromLicense').outputs.instanceView.value.statuses[0].message, '#DATA#')[1]).SAS_STUDIO)]"
+     }
+  }
+}

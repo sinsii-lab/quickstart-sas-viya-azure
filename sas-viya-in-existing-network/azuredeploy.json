@@ -327,7 +327,6 @@
       },
       "dependsOn": []
     },
-
     {
       "apiVersion": "2017-08-01",
       "name": "updateApplicationGatewaySubnet",
@@ -816,7 +815,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('./ansiblecontroller_startup.sh \"1\" \"', parameters('AzureStorageFileBase'), '\" \"', parameters('TemplateStorageSASKey'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', parameters('privateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" > /tmp/runAnsiblePhase1_SetupPrerequisites.log')]"
+            "value": "[concat('./ansiblecontroller_startup.sh \"1\" \"', parameters('AzureStorageFileBase'), '\" \"', parameters('TemplateStorageSASKey'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', parameters('privateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" |tee /tmp/runAnsiblePhase1_SetupPrerequisites.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('AzureStorageFileBase')]"
@@ -976,7 +975,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('./ansiblecontroller_startup.sh \"5\" \"', parameters('AzureStorageFileBase'), '\" \"', parameters('TemplateStorageSASKey'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', parameters('privateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" > /tmp/runAnsiblePhase5_PRE_INSTALL.log')]"
+            "value": "[concat('./ansiblecontroller_startup.sh \"5\" \"', parameters('AzureStorageFileBase'), '\" \"', parameters('TemplateStorageSASKey'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', parameters('privateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" |tee /tmp/runAnsiblePhase5_PRE_INSTALL.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('AzureStorageFileBase')]"
@@ -988,7 +987,7 @@
       }
     },
     {
-      "name": "AnsiblePhase7RunViyaInstall",
+      "name": "AnsiblePhase7Part1RunViyaInstall",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2018-05-01",
       "dependsOn": [
@@ -1008,7 +1007,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('./ansiblecontroller_startup.sh \"7\" \"', parameters('AzureStorageFileBase'), '\" \"', parameters('TemplateStorageSASKey'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', parameters('privateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" > /tmp/runAnsiblePhase7_SAS_INSTALL.log')]"
+            "value": "[concat('./ansiblecontroller_startup.sh \"7\" \"', parameters('AzureStorageFileBase'), '\" \"', parameters('TemplateStorageSASKey'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', parameters('privateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" |tee /tmp/runAnsiblePhase7Part1_SAS_INSTALL.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('AzureStorageFileBase')]"
@@ -1020,11 +1019,11 @@
       }
     },
     {
-      "name": "AnsiblePhase8PostViyaInstall",
+      "name": "AnsiblePhase7Part2RunViyaInstall",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2018-05-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase7RunViyaInstall')]"
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase7Part1RunViyaInstall')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -1040,7 +1039,71 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('./ansiblecontroller_startup.sh \"8\" \"', parameters('AzureStorageFileBase'), '\" \"', parameters('TemplateStorageSASKey'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', parameters('privateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" > /tmp/runAnsiblePhase8_POST_INSTALL.log')]"
+            "value": "[concat('./ansiblecontroller_startup.sh \"7\" \"', parameters('AzureStorageFileBase'), '\" \"', parameters('TemplateStorageSASKey'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', parameters('privateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" |tee /tmp/runAnsiblePhase7Part2_SAS_INSTALL.log')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('AzureStorageFileBase')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('TemplateStorageSASKey')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "AnsiblePhase7Part3RunViyaInstall",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-05-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase7Part2RunViyaInstall')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('ExtensionAnsibleURI')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmName": {
+            "value": "[variables('AnsibleController_name')]"
+          },
+          "commandToExecute": {
+            "value": "[concat('./ansiblecontroller_startup.sh \"7\" \"', parameters('AzureStorageFileBase'), '\" \"', parameters('TemplateStorageSASKey'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', parameters('privateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" |tee /tmp/runAnsiblePhase7Part3_SAS_INSTALL.log')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('AzureStorageFileBase')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('TemplateStorageSASKey')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "AnsiblePhase8PostViyaInstall",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2018-05-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase7Part3RunViyaInstall')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('ExtensionAnsibleURI')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmName": {
+            "value": "[variables('AnsibleController_name')]"
+          },
+          "commandToExecute": {
+            "value": "[concat('./ansiblecontroller_startup.sh \"8\" \"', parameters('AzureStorageFileBase'), '\" \"', parameters('TemplateStorageSASKey'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', parameters('privateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" |tee /tmp/runAnsiblePhase8_POST_INSTALL.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('AzureStorageFileBase')]"

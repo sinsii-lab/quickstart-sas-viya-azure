@@ -25,23 +25,23 @@ if [ "$ret" -ne "0" ]; then
     exit $ret
 fi
 
-time ansible-playbook -f $FORKS -i $INVENTORY_FILE -v pre.deployment.yml -e VIRK_CLONE_DIRECTORY="$VIRK_CLONE_DIRECTORY" -e ORCHESTRATION_DIRECTORY="$ORCHESTRATION_DIRECTORY"
+time ansible-playbook -f $FORKS -i $INVENTORY_FILE -v pre.deployment.yml -e VIRK_CLONE_DIRECTORY="$VIRK_CLONE_DIRECTORY" -e ORCHESTRATION_DIRECTORY="$ORCHESTRATION_DIRECTORY" -e "sasboot_pw='$ADMINPASS'"
 ret="$?"
 if [ "$ret" -ne "0" ]; then
     exit $ret
 fi
 
-time ansible-playbook -f $FORKS -i $INVENTORY_FILE -v update.inventory.yml -e VIRK_CLONE_DIRECTORY="$VIRK_CLONE_DIRECTORY" -e ORCHESTRATION_DIRECTORY="$ORCHESTRATION_DIRECTORY"
-ret="$?"
-if [ "$ret" -ne "0" ]; then
-    exit $ret
-fi
-
-time ansible-playbook -v -f $FORKS "${VIRK_CLONE_DIRECTORY}/playbooks/pre-install-playbook/viya_pre_install_playbook.yml" -i "$ORCHESTRATION_DIRECTORY/sas_viya_playbook/inventory.ini" --skip-tags skipmemfail,skipcoresfail,skipstoragefail,skipnicssfail,bandwidth -e 'use_pause=false'
-ret="$?"
-if [ "$ret" -ne "0" ]; then
-    exit $ret
-fi
+#time ansible-playbook -f $FORKS -i $INVENTORY_FILE -v update.inventory.yml -e VIRK_CLONE_DIRECTORY="$VIRK_CLONE_DIRECTORY" -e ORCHESTRATION_DIRECTORY="$ORCHESTRATION_DIRECTORY"
+#ret="$?"
+#if [ "$ret" -ne "0" ]; then
+#    exit $ret
+#fi
+#
+#time ansible-playbook -f $FORKS -i $INVENTORY_FILE -v update.config.yml -e "sasboot_pw='$ADMINPASS'" -e VIRK_CLONE_DIRECTORY="$VIRK_CLONE_DIRECTORY" -e ORCHESTRATION_DIRECTORY="$ORCHESTRATION_DIRECTORY"
+#ret="$?"
+#if [ "$ret" -ne "0" ]; then
+#    exit $ret
+#fi
 
 if [ -n "$USERPASS" ]; then
 	echo "$(date) Install and set up OpenLDAP (see deployment-openldap.log)"
@@ -54,8 +54,11 @@ if [ -n "$USERPASS" ]; then
 	cp "${DIRECTORY_GIT_LOCAL_COPY}/openldap/sitedefault.yml" "${ORCHESTRATION_DIRECTORY}/sas_viya_playbook/roles/consul/files/"
 fi
 
-time ansible-playbook -f $FORKS -i $INVENTORY_FILE -v update.config.yml -e "sasboot_pw='$ADMINPASS'" -e VIRK_CLONE_DIRECTORY="$VIRK_CLONE_DIRECTORY" -e ORCHESTRATION_DIRECTORY="$ORCHESTRATION_DIRECTORY"
+
+
+time ansible-playbook -v -f $FORKS "${VIRK_CLONE_DIRECTORY}/playbooks/pre-install-playbook/viya_pre_install_playbook.yml" -i "$ORCHESTRATION_DIRECTORY/sas_viya_playbook/inventory.ini" --skip-tags skipmemfail,skipcoresfail,skipstoragefail,skipnicssfail,bandwidth -e 'use_pause=false'
 ret="$?"
 if [ "$ret" -ne "0" ]; then
     exit $ret
 fi
+

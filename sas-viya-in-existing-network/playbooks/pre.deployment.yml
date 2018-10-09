@@ -50,6 +50,12 @@
         name: read_sas_license_information
     - import_role:
         name: predeploy_sas_orchestration_virk
+    - include_role:
+        name: _setup_sas_orchestration_inventory_config/3.3
+      when: "SAS_LICENSE.viya_version == '3.3'"
+    - include_role:
+        name: _setup_sas_orchestration_inventory_config/3.4
+      when: "SAS_LICENSE.viya_version == '3.4'"
 
 - hosts: sas-services
   become: yes

@@ -13,6 +13,10 @@ FORKS=5
 
 INVENTORY_FILE="inventory.ini"
 
+#the file into which the return code will be written
+RETURN_FILE="$1"
+
+
 # sometimes there are ssh connection errors (53) during the install
 # this function allows to retry N times
 function try () {
@@ -26,13 +30,16 @@ function try () {
   return $RC
 }
 
+
 export ANSIBLE_STDOUT_CALLBACK=debug
 
 sudo chown -R $USER "${ORCHESTRATION_DIRECTORY}"
 cd "${ORCHESTRATION_DIRECTORY}/sas_viya_playbook"
 ansible-playbook -v site.yml
 ret="$?"
+if [ ! -z "$RETURN_FILE" ]; then
+    echo "$ret" > "$RETURN_FILE"
+fi
 if [ "$ret" -ne "0" ]; then
     exit $ret
 fi
-

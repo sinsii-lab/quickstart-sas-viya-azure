@@ -67,7 +67,7 @@ elif [ "$SCRIPT_PHASE" -eq "6" ]; then
 elif [ "$SCRIPT_PHASE" -eq "7" ]; then
 	echo "Starting Actual Install"
 	su $PRIMARY_USER<<END
-	${DIRECTORY_GIT_LOCAL_COPY}/scripts/install_run_orchestration.sh
+	${DIRECTORY_GIT_LOCAL_COPY}/scripts/install_run_orchestration_wrapper.sh
 END
 elif [ "$SCRIPT_PHASE" -eq "8" ]; then
 	echo "Starting Actual Install"

@@ -82,6 +82,7 @@
 /scripts/install_post_orchestration.sh|775
 /scripts/install_pre_orchestration.sh|775
 /scripts/install_run_orchestration.sh|775
+/scripts/install_run_orchestration_wrapper.sh|775
 /scripts/make_file_tree_file.sh|775
 /scripts/nonansiblecontroller_prereqs.sh|775
 /scripts/recover_cascontroller.sh|775

@@ -52,16 +52,16 @@
 
     - name: setting cas size for 4 cores
       set_fact:
-        CAS_VM_SIZE: Standard_E4s_v3
+        CAS_VM_SIZE: Standard_E8s_v3
 
     - name: setting cas size for 8 cores
       set_fact:
-        CAS_VM_SIZE: Standard_E8s_v3
+        CAS_VM_SIZE: Standard_E16s_v3
       when: CAS_SERVER_LICENCED_CORES == '8'
 
     - name: setting cas size for 16 cores
       set_fact:
-        CAS_VM_SIZE: Standard_E16s_v3
+        CAS_VM_SIZE: Standard_E32s_v3
       when: CAS_SERVER_LICENCED_CORES == '16'
 
     - name: build json prototype variable

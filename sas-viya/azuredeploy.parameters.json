@@ -21,15 +21,15 @@
       "value": "sasadmin"
     },
     "SASUserPass": {
-      "value": "sasadmin3!"
+      "value": ""
     },
     "DomainName": {
       "value": ""
     },
-    "TemplateStorageSASKey": {
+    "_artifactsLocationSasToken": {
       "value": "?sv=2017-11-09&ss=bfqt&srt=sco&sp=rdlp&se=2100-06-28T05:28:32Z&st=2018-06-27T21:28:32Z&spr=https&sig=ysloF7%2Bnkq2NzVF2T%2FaIaNmhqRZ3%2BWI4N4Fobwr80Fw%3D"
     },
-    "AzureStorageFileBase": {
+    "_artifactsLocation": {
       "value": "https://viyamercury.blob.core.windows.net/mercury-playpen/dev-chlync"
     }
   }

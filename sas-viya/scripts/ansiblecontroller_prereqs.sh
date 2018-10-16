@@ -119,7 +119,7 @@ END
 #yum install -y wget
 echo "$(date)"
 echo "download all files from file tree"
-file_list_url="${https_location}/sas-viya-in-existing-network/file_tree.txt"
+file_list_url="${https_location}/sas-viya/file_tree.txt"
 if [ ! -z "$https_sas_key" ]; then
 	file_list_url="${file_list_url}${https_sas_key}"
 fi
@@ -131,7 +131,7 @@ while read line; do
   directory="$(dirname "$line")"
   target_directory="${DIRECTORY_GIT_LOCAL_COPY}/$directory"
   target_file_name="${DIRECTORY_GIT_LOCAL_COPY}/$file_name"
-  target_url="${https_location}/sas-viya-in-existing-network${file_name}"
+  target_url="${https_location}/sas-viya${file_name}"
   if [ ! -z "$https_sas_key" ]; then
 	target_url="${target_url}${https_sas_key}"
   fi

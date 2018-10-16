@@ -59,19 +59,25 @@ elif [ "$SCRIPT_PHASE" -eq "5" ]; then
 	echo "waiting for sync with client servers"
 	${DIRECTORY_GIT_LOCAL_COPY}/scripts/ansiblecontroller_waitforsync.sh
 	echo "Install Prep"
-	su $PRIMARY_USER<<END
-	${DIRECTORY_GIT_LOCAL_COPY}/scripts/install_pre_orchestration.sh
-END
+	su $PRIMARY_USER -c	"${DIRECTORY_GIT_LOCAL_COPY}/scripts/install_pre_orchestration.sh"
+	ret="$?"
+    if [ "$ret" -ne "0" ]; then
+        exit $ret
+    fi
 elif [ "$SCRIPT_PHASE" -eq "6" ]; then
     cat "$FILE_CA_B64_FILE"|tr -d '\n'
 elif [ "$SCRIPT_PHASE" -eq "7" ]; then
 	echo "Starting Actual Install"
-	su $PRIMARY_USER<<END
-	${DIRECTORY_GIT_LOCAL_COPY}/scripts/install_run_orchestration_wrapper.sh
-END
+	su $PRIMARY_USER -c "${DIRECTORY_GIT_LOCAL_COPY}/scripts/install_run_orchestration_wrapper.sh"
+	ret="$?"
+    if [ "$ret" -ne "0" ]; then
+        exit $ret
+    fi
 elif [ "$SCRIPT_PHASE" -eq "8" ]; then
 	echo "Starting Actual Install"
-	su $PRIMARY_USER<<END
-	${DIRECTORY_GIT_LOCAL_COPY}/scripts/install_post_orchestration.sh
-END
+	su $PRIMARY_USER -c "${DIRECTORY_GIT_LOCAL_COPY}/scripts/install_post_orchestration.sh"
+	ret="$?"
+    if [ "$ret" -ne "0" ]; then
+        exit $ret
+    fi
 fi

@@ -32,6 +32,7 @@ function try () {
 
 
 export ANSIBLE_STDOUT_CALLBACK=debug
+export ANSIBLE_ANY_ERRORS_FATAL=True
 
 sudo chown -R $USER "${ORCHESTRATION_DIRECTORY}"
 cd "${ORCHESTRATION_DIRECTORY}/sas_viya_playbook"

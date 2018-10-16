@@ -76,4 +76,10 @@
     dest: "{{ tmp_folder_controller}}/{{CERTNAME}}.pem"
     flat: yes
 
-
+- name: Allow openldap server through the firewall
+  firewalld:
+    service: ldaps
+    permanent: true
+    state: enabled
+    zone: public
+    immediate: yes

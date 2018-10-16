@@ -8,7 +8,8 @@ OLCUSERPW: ""      # the password for the sasuser01--sasuser10 accounts
 # Hopefully you don't need to update this variable:
 #      this resolves to the openLDAP server's FQDN. 
 #      you may need to override it if hostname -f is not the right hostname for you
-OpenLDAPFQDN: "{{hostvars[groups['openldapserver'][0]]['ansible_fqdn']}}"
+# This is overridden in azure to
+OpenLDAPFQDN: "{{hostvars[groups['openldapserver'][0]]['ansible_host']}}"
 
 # if you are not happy with the following default users and groups, feel free to udpate. 
 user_list:

@@ -20,7 +20,7 @@ FILE_OF_RECORD="/tmp/install_run_orchestration.log"
 
 if [ ! -e "$PID_FILE" ]; then
     if [ ! -e "$RETURN_FILE" ]; then
-        nohup ${ScriptDirectory}/install_run_orchestration.sh "$RETURN_FILE" &> "$FILE_OF_RECORD" &
+        nohup ${ScriptDirectory}/install_run_orchestration.sh "$RETURN_FILE"  </dev/null &> "$FILE_OF_RECORD" &
         PID=$!
         echo $PID > "$PID_FILE"
     else
@@ -38,8 +38,8 @@ else
     fi
 fi
 
-tail -100f "$FILE_OF_RECORD" &
-tail_command_pid=$!
+#tail -100f "$FILE_OF_RECORD" &
+#tail_command_pid=$!
 # one hour
 TIME_TO_LIVE_IN_SECNDS=$((60*60))
 CURRENT_TIME_ALIVE_IN_SECONDS=0
@@ -49,7 +49,8 @@ while [ "$TIME_TO_LIVE_IN_SECNDS" -gt "$CURRENT_TIME_ALIVE_IN_SECONDS" ] && kill
     CURRENT_TIME_ALIVE_IN_SECONDS=$((CURRENT_TIME_ALIVE_IN_SECONDS+1))
 
 done
-kill $tail_command_pid
+#kill $tail_command_pid
+tail -1000 "$FILE_OF_RECORD"
 if [ -e "$RETURN_FILE" ]; then
     # if we hit the end and have a return file, then return the value of that (which is the value of the underlying script
     exit $(cat $RETURN_FILE)

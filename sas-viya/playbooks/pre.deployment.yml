@@ -45,11 +45,20 @@
     LICENSE_FILE: "/exports/bastion/setup/license/license_file.zip"
     VIRK_CLONE_DIRECTORY: "/exports/bastion/setup/virk"
     ORCHESTRATION_DIRECTORY: "/exports/bastion/setup/orchestration"
+    CODE_DIRECTORY: "/exports/bastion/setup/code"
   tasks:
     - import_role:
         name: read_sas_license_information
     - import_role:
         name: predeploy_sas_orchestration_virk
+    - name: copy site defaults for openldap
+      copy:
+        src: "{{ CODE_DIRECTORY }}/openldap/sitedefault.yml"
+        dest: "{{ ORCHESTRATION_DIRECTORY }}/sas_viya_playbook/roles/consul/files/sitedefault.yml"
+        remote_src: yes
+      delegate_to: localhost
+      run_once: true
+      when: "OLCUSERPW != ''"
     - include_role:
         name: _setup_sas_orchestration_inventory_config/3.3
       when: "SAS_LICENSE.viya_version == '3.3'"
@@ -94,19 +103,22 @@
         subjectAltName = @alt_names
 
         [ alt_names ]
+        DNS.1 = localhost
         {% for host in groups['sas-services'] %}
-        DNS = {{ hostvars[host].inventory_hostname }}
-        DNS = {{ hostvars[host].ansible_host }}
-        DNS = *.{{ hostvars[host].ansible_host }}
-        DNS = *.{{ hostvars[host].inventory_hostname }}
+        DNS.{{ loop.index0 * 4 + 2 }} = {{ hostvars[host].inventory_hostname }}
+        DNS.{{ loop.index0 * 4 + 3 }} = {{ hostvars[host].ansible_host }}
+        DNS.{{ loop.index0 * 4 + 4 }} = *.{{ hostvars[host].ansible_host }}
+        DNS.{{ loop.index0 * 4 + 5 }} = *.{{ hostvars[host].inventory_hostname }}
         {% endfor %}
-        DNS = localhost
-        IP = 127.0.0.1
-        IP = 0:0:0:0:0:0:0:1
+
+        IP.1 = 127.0.0.1
+        IP.2 = 0:0:0:0:0:0:0:1
+        {% for host in groups['sas-services'] %}
+        IP.{{ loop.index0 + 3 }} = {{ hostvars[host].ansible_default_ipv4.address }}
+        {% endfor %}
         EOF
         cat > "{{ SSL_WORKING_FOLDER }}/mintCert.sh"<<-EOF
-        openssl req -new -newkey rsa:2048 -keyout "{{ SSL_WORKING_FOLDER }}/{{ SSL_CHILD_KEY_FILENAME }}" -out "{{ SSL_WORKING_FOLDER }}/{{ SSL_CHILD_CERT_FILENAME }}.req" -days 3650 -nodes -config "{{ SSL_WORKING_FOLDER }}/cert_config_file.cfg"
-        openssl  x509 -req -sha512 -CA "{{ SSL_WORKING_FOLDER }}/{{SSL_CA_CERT_FILENAME}}" -CAkey "{{ SSL_WORKING_FOLDER }}/{{SSL_CA_KEY_FILENAME}}" -in "{{ SSL_WORKING_FOLDER }}/{{ SSL_CHILD_CERT_FILENAME }}.req" -out "{{ SSL_WORKING_FOLDER }}/{{ SSL_CHILD_CERT_FILENAME }}" -days 3650 -CAcreateserial -extensions req_ext -extfile "{{ SSL_WORKING_FOLDER }}/cert_config_file.cfg"
+        openssl req -x509 -newkey rsa:2048 -keyout "{{ SSL_WORKING_FOLDER }}/{{ SSL_CHILD_KEY_FILENAME }}" -out "{{ SSL_WORKING_FOLDER }}/{{ SSL_CHILD_CERT_FILENAME }}" -days 3650 -nodes -config "{{ SSL_WORKING_FOLDER }}/cert_config_file.cfg" -extensions req_ext
         EOF
         chmod +x "{{ SSL_WORKING_FOLDER }}/mintCert.sh"
         bash "{{ SSL_WORKING_FOLDER }}/mintCert.sh"
@@ -132,11 +144,11 @@
       dest: "{{ SSL_CLIENT_KEY_TARGET_FOLDER }}/{{SSL_CHILD_KEY_FILENAME}}"
       mode: 0600
 
-  - name: copy CA cert to all services
-    copy:
-      src: "{{ SSL_WORKING_FOLDER }}/{{SSL_CA_CERT_FILENAME}}"
-      dest: "{{ SSL_CLIENT_CERT_TARGET_FOLDER }}/server-chain.crt"
-      mode: 0644
+#  - name: copy CA cert to all services
+#    copy:
+#      src: "{{ SSL_WORKING_FOLDER }}/{{SSL_CA_CERT_FILENAME}}"
+#      dest: "{{ SSL_CLIENT_CERT_TARGET_FOLDER }}/server-chain.crt"
+#      mode: 0644
 
   - name: outputting the crt file with the data markers
     blockinfile:

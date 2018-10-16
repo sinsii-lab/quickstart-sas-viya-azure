@@ -831,7 +831,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('./ansiblecontroller_startup.sh \"1\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkPrivateSubnet'))).addressPrefix, '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" |tee /tmp/runAnsiblePhase1_SetupPrerequisites.log')]"
+            "value": "[concat('./ansiblecontroller_startup.sh \"1\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkPrivateSubnet'))).addressPrefix, '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" &> /tmp/runAnsiblePhase1_SetupPrerequisites.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -991,7 +991,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('./ansiblecontroller_startup.sh \"5\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkPrivateSubnet'))).addressPrefix, '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" |tee /tmp/runAnsiblePhase5_PRE_INSTALL.log')]"
+            "value": "[concat('./ansiblecontroller_startup.sh \"5\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkPrivateSubnet'))).addressPrefix, '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" &> /tmp/runAnsiblePhase5_PRE_INSTALL.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -1023,7 +1023,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('./ansiblecontroller_startup.sh \"7\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkPrivateSubnet'))).addressPrefix, '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" |tee /tmp/runAnsiblePhase7Part1_SAS_INSTALL.log')]"
+            "value": "[concat('./ansiblecontroller_startup.sh \"7\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkPrivateSubnet'))).addressPrefix, '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" &> /tmp/runAnsiblePhase7Part1_SAS_INSTALL.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -1055,7 +1055,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('./ansiblecontroller_startup.sh \"7\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkPrivateSubnet'))).addressPrefix, '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" |tee /tmp/runAnsiblePhase7Part2_SAS_INSTALL.log')]"
+            "value": "[concat('./ansiblecontroller_startup.sh \"7\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkPrivateSubnet'))).addressPrefix, '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" &> /tmp/runAnsiblePhase7Part2_SAS_INSTALL.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -1087,7 +1087,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('./ansiblecontroller_startup.sh \"7\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkPrivateSubnet'))).addressPrefix, '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" |tee /tmp/runAnsiblePhase7Part3_SAS_INSTALL.log')]"
+            "value": "[concat('./ansiblecontroller_startup.sh \"7\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkPrivateSubnet'))).addressPrefix, '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" &> /tmp/runAnsiblePhase7Part3_SAS_INSTALL.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -1119,7 +1119,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('./ansiblecontroller_startup.sh \"8\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkPrivateSubnet'))).addressPrefix, '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" |tee /tmp/runAnsiblePhase8_POST_INSTALL.log')]"
+            "value": "[concat('./ansiblecontroller_startup.sh \"8\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Network/virtualNetworks/subnets', variables('VirtualNetworkName'), variables('VirtualNetworkPrivateSubnet'))).addressPrefix, '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" &> /tmp/runAnsiblePhase8_POST_INSTALL.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"

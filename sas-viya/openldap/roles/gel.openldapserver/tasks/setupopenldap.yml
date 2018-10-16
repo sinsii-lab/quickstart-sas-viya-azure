@@ -12,11 +12,11 @@
 # - debug: var="OLCROOTPW"
 # I added a bunch of equals padding to the end to 
 - name: encrypt the admin password
-  shell: "slappasswd -s '{{ OLCROOTPW + '====' | b64decode }}'"
+  shell: "slappasswd -s '{{ OLCROOTPW | b64decode }}'"
   register: OLCROOTPW_ENC
 
 - name: encrypt the user password
-  shell: "slappasswd -s '{{ OLCUSERPW + '====' | b64decode }}'"
+  shell: "slappasswd -s '{{ OLCUSERPW | b64decode }}'"
   register: OLCUSERPW_ENC
 
 

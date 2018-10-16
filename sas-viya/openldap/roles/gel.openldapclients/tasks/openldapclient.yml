@@ -13,7 +13,7 @@
   file:
     path: "{{CACERTLOC}}"
     state: directory
-    mode: 0700
+    mode: 0755
 
 
 - name: push the keys to the openldap clients

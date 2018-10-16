@@ -56,21 +56,21 @@
     tags:
       - cas
 
-- hosts: sas-services
-  become: yes
-  tasks:
-    - name: set CA as parent in ssl chain
-      lineinfile:
-        path: /etc/httpd/conf.d/ssl.conf
-        regexp: '^SSLCertificateChainFile +.+'
-        line: 'SSLCertificateChainFile /etc/pki/tls/certs/server-chain.crt'
-      tags:
-        - cert
-    - name: restart httpd
-      become: yes
-      become_user: root
-      service:
-        name: httpd
-        state: restarted
-      tags:
-        - cert
+#- hosts: sas-services
+#  become: yes
+#  tasks:
+#    - name: set CA as parent in ssl chain
+#      lineinfile:
+#        path: /etc/httpd/conf.d/ssl.conf
+#        regexp: '^SSLCertificateChainFile +.+'
+#        line: 'SSLCertificateChainFile /etc/pki/tls/certs/server-chain.crt'
+#      tags:
+#        - cert
+#    - name: restart httpd
+#      become: yes
+#      become_user: root
+#      service:
+#        name: httpd
+#        state: restarted
+#      tags:
+#        - cert

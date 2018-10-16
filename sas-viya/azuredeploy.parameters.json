@@ -18,10 +18,10 @@
       "value": "149.173.0.0/16"
     },
     "SASAdminPass": {
-      "value": "sasadmin"
+      "value": "adminadmin"
     },
     "SASUserPass": {
-      "value": ""
+      "value": "useruser"
     },
     "DomainName": {
       "value": ""

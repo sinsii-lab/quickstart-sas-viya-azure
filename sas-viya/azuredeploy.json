@@ -6,7 +6,7 @@
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "Path to the SAS License file."
+        "description": "Blob Shared Access Signature(SAS) URL to the SAS license."
       }
     },
     "SSHPublicKey": {
@@ -20,7 +20,7 @@
       "type": "string",
       "defaultValue": "eastus",
       "metadata": {
-        "description": "The location in azure that these resources should be created."
+        "description": "The location in Microsoft Azure where these resources should be created."
       }
     },
     "WebIngressLocation": {
@@ -48,21 +48,21 @@
       "type": "securestring",
       "defaultValue": "",
       "metadata": {
-        "description": "Password of the default SAS User (sasuser). If left empty, no default users are being created (WARNING: If not set, deployment will require additional setup steps before being usable)."
+        "description": "Password of the default SAS User (sasuser). If left empty, no default users are created. (WARNING: If not set, deployment will require additional setup steps before it is usable)."
       }
     },
     "_artifactsLocationSasToken": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "For the purposes of connecting to private templates, a Shared Access Signature (or SAS, no relation), is needed to gain access to the template. This should be the URI append string that grants that authroization."
+        "description": "For a standard deployment, leave empty. If you are running from a blob template, then provide the Shared Access Signature token (starting with a ?) that grants authorization to the private template. "
       }
     },
     "_artifactsLocation": {
       "type": "string",
       "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sas-viya",
       "metadata": {
-        "description": "This is the https url to the base of the deployment files in azure. If a SAS key is needed, please do not include it in the url, but instead add the part after and including the question mark to the _artifactsLocationSasToken variable. ex. https://<STORAGE_ACCOUNT>.file.core.windows.net/<SHARE_NAME>/<SUBDIRECTORY_NAME>"
+        "description": "For a standard deployment, keep the default.  The https URL to the base of the deployment files in Microsoft Azure. If a SAS key is needed, please do not include the SAS key in the URL. Instead, add the part after and include the question mark to the _artifactsLocationSasToken variable. ex. https://<STORAGE_ACCOUNT>.file.core.windows.net/<SHARE_NAME>/<SUBDIRECTORY_NAME>"
       }
     }
   },
@@ -98,7 +98,7 @@
   "functions": [],
   "resources": [
     {
-      "comments": "The public ip address for the Load ballancer. Should be the only public ip outside of the ansible controler",
+      "comments": "The public IP address for the load balancer. Should be the only public IP outside of the Ansible controler",
       "type": "Microsoft.Network/publicIPAddresses",
       "sku": {
         "name": "Basic",
@@ -121,7 +121,7 @@
       "dependsOn": []
     },
     {
-      "comments": "The primary network security group of the ansible controller",
+      "comments": "The primary network security group of the Ansible controller",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('LoadBalancerNetworkSecurityGroup')]",
       "apiVersion": "2018-02-01",
@@ -191,7 +191,7 @@
             "name": "AllowAzureLoadBalancerInBound",
             "properties": {
               "provisioningState": "Succeeded",
-              "description": "Allow inbound traffic from azure load balancer",
+              "description": "Allow inbound traffic from the Microsoft Azure load balancer",
               "protocol": "*",
               "sourcePortRange": "*",
               "destinationPortRange": "*",
@@ -248,7 +248,7 @@
             "name": "AllowInternetOutBound",
             "properties": {
               "provisioningState": "Succeeded",
-              "description": "Allow outbound traffic from all VMs to Internet",
+              "description": "Allow outbound traffic from all VMs to the Internet",
               "protocol": "*",
               "sourcePortRange": "*",
               "destinationPortRange": "*",
@@ -338,7 +338,7 @@
 
 
     {
-      "comments": "The primary application gateway for the viya quickstart.",
+      "comments": "The primary application gateway for the SAS Viya Quickstart.",
       "type": "Microsoft.Network/applicationGateways",
       "name": "[variables('LoadBalancerName')]",
       "apiVersion": "2018-02-01",
@@ -485,7 +485,7 @@
       ]
     },
     {
-      "comments": "The primary network security group of the ansible controller",
+      "comments": "The primary network security group of the Ansible controller",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "AnsibleController_NetworkSecurityGroup",
       "apiVersion": "2018-02-01",
@@ -536,7 +536,7 @@
             "name": "AllowAzureLoadBalancerInBound",
             "properties": {
               "provisioningState": "Succeeded",
-              "description": "Allow inbound traffic from azure load balancer",
+              "description": "Allow inbound traffic from the Microsoft Azure load balancer",
               "protocol": "*",
               "sourcePortRange": "*",
               "destinationPortRange": "*",
@@ -632,7 +632,7 @@
       "dependsOn": []
     },
     {
-      "comments": "The public ip address for the ansible controller. Should be the only public ip outside of the load ballancer",
+      "comments": "The public IP address for the Ansible controller. Should be the only public IP outside of the load balancer",
       "type": "Microsoft.Network/publicIPAddresses",
       "sku": {
         "name": "Basic",
@@ -652,7 +652,7 @@
       "dependsOn": []
     },
     {
-      "comments": "The network interface of the ansible controller. This will be accessable to the public within the bounds of the security groups.",
+      "comments": "The network interface of the Ansible controller. This will be accessable to the public within the bounds of the security groups.",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "AnsibleController_NetworkInterface",
       "apiVersion": "2018-02-01",
@@ -701,7 +701,7 @@
       ]
     },
     {
-      "comments": "The ansible controler and bastion server for this environment.",
+      "comments": "The Ansible controller and bastion server for this environment.",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('AnsibleController_name')]",
       "apiVersion": "2017-12-01",
@@ -1088,7 +1088,7 @@
       }
     },
     {
-      "comments": "The network interface of the ansible controller. This will be accessable to the public within the bounds of the security groups.",
+      "comments": "The network interface of the Ansible controller. This will be accessible to the public within the bounds of the security groups.",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "CASController_NetworkInterface",
       "apiVersion": "2018-02-01",
@@ -1140,7 +1140,7 @@
       ]
     },
     {
-      "comments": "Diagnostic storage group for the sas stack",
+      "comments": "Diagnostic storage group for the SAS Viya stack",
       "type": "Microsoft.Storage/storageAccounts",
       "sku": {
         "name": "Standard_LRS",
@@ -1175,7 +1175,7 @@
       "dependsOn": []
     },
     {
-      "comments": "The cas controler for this environment.",
+      "comments": "The CAS controler for this environment.",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('CASController_name')]",
       "apiVersion": "2018-04-01",
@@ -1315,7 +1315,7 @@
             "name": "AllowAzureLoadBalancerInBound",
             "properties": {
               "provisioningState": "Succeeded",
-              "description": "Allow inbound traffic from azure load balancer",
+              "description": "Allow inbound traffic from the Microsoft Azure load balancer",
               "protocol": "*",
               "sourcePortRange": "*",
               "destinationPortRange": "*",
@@ -1372,7 +1372,7 @@
             "name": "AllowInternetOutBound",
             "properties": {
               "provisioningState": "Succeeded",
-              "description": "Allow outbound traffic from all VMs to Internet",
+              "description": "Allow outbound traffic from all VMs to the Internet",
               "protocol": "*",
               "sourcePortRange": "*",
               "destinationPortRange": "*",

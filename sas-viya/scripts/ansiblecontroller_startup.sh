@@ -39,8 +39,9 @@ export FILE_SSL_JSON_FILE="${DIRECTORY_SSL_JSON_FILE}/loadbalancer.pfx.json"
 export FILE_CA_B64_FILE="${DIRECTORY_SSL_JSON_FILE}/sas_certificate_all.crt.b64.txt"
 
 
-export VIRK_CLONE_DIRECTORY="${DIRECTORY_NFS_SHARE}/setup/virk"
+
 export ORCHESTRATION_DIRECTORY="${DIRECTORY_NFS_SHARE}/setup/orchestration"
+export VIRK_CLONE_DIRECTORY="${ORCHESTRATION_DIRECTORY}/sas_viya_playbook/virk"
 export CODE_DIRECTORY="${DIRECTORY_NFS_SHARE}/setup/code"
 
 #./bastion_bootstrap.sh --enable false

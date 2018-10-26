@@ -6,13 +6,7 @@
     ORCHESTRATION_URL: "{{ SAS[SAS_LICENSE.viya_version].ORCHESTRATION_URL }}"
     VIRK_COMMIT: "{{ SAS[SAS_LICENSE.viya_version].VIRK_COMMIT }}"
 
-- name: create local virk directory
-  file:
-    path: "{{ VIRK_CLONE_DIRECTORY }}"
-    state: directory
-  become: no
-  delegate_to: localhost
-  run_once: true
+
   
 - name: Ensuring that Git is installed
   yum: name={{ item }} state=latest  
@@ -22,25 +16,7 @@
   delegate_to: localhost
   run_once: true
 
-- name: clone the virk directory
-  command: >-
-    git clone {{ VIRK_ORIGIN_CONNECTOR }} {{ VIRK_CLONE_DIRECTORY }}
-  args:
-    creates: "{{ VIRK_CLONE_DIRECTORY }}/.git"
-  become: no
-  delegate_to: localhost
-  run_once: true
-  
-- name: checkout the proper branch if a VIRK_COMMIT is specified
-  command: >-
-    git checkout {{ VIRK_COMMIT }} -b workbranch
-  args:
-    chdir: "{{ VIRK_CLONE_DIRECTORY }}"
-  when: "VIRK_COMMIT != ''"
-  become: no
-  delegate_to: localhost
-  run_once: true
-  failed_when: false
+
     
 - name: create local orchestration directory
   file:
@@ -64,7 +40,7 @@
   shell: >-
     {{ ORCHESTRATION_DIRECTORY }}/sas-orchestration --verbose build --input {{ LICENSE_FILE }} --output "{{ ORCHESTRATION_DIRECTORY }}/SAS_Viya_playbook.tgz"
   args:
-    chdir: "{{ VIRK_CLONE_DIRECTORY }}"
+    chdir: "{{ ORCHESTRATION_DIRECTORY }}"
     creates: "{{ ORCHESTRATION_DIRECTORY }}/SAS_Viya_playbook.tgz"
   become: no
   delegate_to: localhost
@@ -79,6 +55,34 @@
   become: no
   delegate_to: localhost
   run_once: true
+
+- name: create local virk directory
+  file:
+    path: "{{ VIRK_CLONE_DIRECTORY }}"
+    state: directory
+  become: no
+  delegate_to: localhost
+  run_once: true
+
+- name: clone the virk directory
+  command: >-
+    git clone {{ VIRK_ORIGIN_CONNECTOR }} {{ VIRK_CLONE_DIRECTORY }}
+  args:
+    creates: "{{ VIRK_CLONE_DIRECTORY }}/.git"
+  become: no
+  delegate_to: localhost
+  run_once: true
+
+- name: checkout the proper branch if a VIRK_COMMIT is specified
+  command: >-
+    git checkout {{ VIRK_COMMIT }} -b workbranch
+  args:
+    chdir: "{{ VIRK_CLONE_DIRECTORY }}"
+  when: "VIRK_COMMIT != ''"
+  become: no
+  delegate_to: localhost
+  run_once: true
+  failed_when: false
 
 - name: Create local certificate folder
   file:

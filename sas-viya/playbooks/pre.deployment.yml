@@ -7,7 +7,7 @@
     - import_role:
         name: mount_opt_disk
 # now create all of the directories needed for a sas install
-- hosts: sas-all
+- hosts: sas-servers
   become: true
   tasks:
     - name: create viya installation subdir

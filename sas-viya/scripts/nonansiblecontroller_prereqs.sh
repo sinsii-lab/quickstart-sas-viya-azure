@@ -8,7 +8,7 @@ set -v
 
 DIRECTORY_NFS_SHARE="/exports/bastion"
 NFS_MOUNT_POINT="/mnt/AnsibleController/bastion"
-NFS_SEMAPHORE_DIR="${NFS_MOUNT_POINT}/setup/readyness_flags"
+NFS_SEMAPHORE_DIR="${NFS_MOUNT_POINT}/setup/readiness_flags"
 NFS_ANSIBLE_KEYS="${NFS_MOUNT_POINT}/setup/ansible_key"
 NFS_ANSIBLE_INVENTORIES_DIR="${NFS_MOUNT_POINT}/setup/ansible/inventory"
 NFS_ANSIBLE_GROUPS_DIR="${NFS_MOUNT_POINT}/setup/ansible/groups"

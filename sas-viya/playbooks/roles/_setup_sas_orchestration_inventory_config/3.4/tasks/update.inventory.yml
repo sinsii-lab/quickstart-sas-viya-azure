@@ -39,7 +39,7 @@
     replace:
       dest="{{ ORCHESTRATION_INVENTORY }}"
       regexp='^\[CommandLine\]\ndeployTarget'
-      replace='[CommandLine]\n{{ groups["sas-all"]|unique|join("\n") }}'
+      replace='[CommandLine]\n{{ groups["sas-servers"]|unique|join("\n") }}'
 
   - name: Programming - connect
     replace:

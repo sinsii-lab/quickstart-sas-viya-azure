@@ -18,7 +18,7 @@
       - backups
     when: "inventory_hostname == groups['StatefulServicesServers'][0]"
 
-- hosts: sas-all
+- hosts: sas-servers
   become: yes
   become_user: root
   tasks:

@@ -3,34 +3,16 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "DeploymentDataLocation" : {
-      "value": "https://viyamercury.blob.core.windows.net/mercury-deployment-data/viya3.4/SAS_Viya_deployment_data_VDMMLDP_all_4Core.zip?sv=2017-11-09&ss=bfqt&srt=sco&sp=rdlp&se=2100-06-28T05:28:32Z&st=2018-06-27T21:28:32Z&spr=https&sig=ysloF7%2Bnkq2NzVF2T%2FaIaNmhqRZ3%2BWI4N4Fobwr80Fw%3D"
-    },
-    "SSHPublicKey": {
-      "value": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDmj4OjEV/fQQRB4w1X/CbJz55FVHWtWJJ8mrOTM9xCEevza4xhB0YXKn64IZtVLvTK+pN+p2LWlIN4BIEjG6gB1q3Kr2xoZQ5kFlR2bZwirYDxYwM0UyQWBodHVDjJHZZREKj/c9zM+KMePpPAb5P6/KQE13Y74ZN4FkQXUSX5GQM6hb778TuSaIKb4k7cSQ1MJoOcF3ED+QVSraqip8d4ZDpJV9r1/UVwTvKRAP9WH8ByVeHW15RVJASdU+vLX9zODksxCrGNMATqOow8/n8p9auoYPuRfZn7T5DZATx3q9Rh4yOD/MRNnQ+8cVRGw9fDDsQoic59dOY204Cro2wj a3scas"
-    },
-    "location": {
-      "value": "eastus"
-    },
-    "WebIngressLocation": {
-      "value": "149.173.0.0/16"
-    },
-    "AdminIngressLocation": {
-      "value": "149.173.0.0/16"
-    },
-    "SASAdminPass": {
-      "value": "adminadmin"
-    },
-    "SASUserPass": {
-      "value": "useruser"
-    },
-    "DomainName": {
       "value": ""
     },
-    "_artifactsLocationSasToken": {
-      "value": "?sv=2017-11-09&ss=bfqt&srt=sco&sp=rdlp&se=2100-06-28T05:28:32Z&st=2018-06-27T21:28:32Z&spr=https&sig=ysloF7%2Bnkq2NzVF2T%2FaIaNmhqRZ3%2BWI4N4Fobwr80Fw%3D"
+    "SSHPublicKey": {
+      "value": "GEN-SSH-PUB-KEY"
     },
-    "_artifactsLocation": {
-      "value": "https://viyamercury.blob.core.windows.net/mercury-playpen/dev-chlync"
+    "SASAdminPass": {
+      "value": "GEN-PASSWORD"
+    },
+    "SASUserPass": {
+      "value": "GEN-PASSWORD"
     }
   }
 }

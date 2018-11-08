@@ -35,11 +35,11 @@ echo "CAS marked ready for ansible"
 #done
 #echo "ProgrammingServices marked ready for ansible"
 while [ ! -e "${DIRECTORY_READYNESS_FLAGS}/services_ready" ]; do
-	echo "VisualServices not ready, waiting 1 second"
+	echo "Services not ready, waiting 1 second"
 	sleep 1
 	if [ "$((wait_count++))" -gt "$stop_waiting_count" ]; then
 		exit 1
 	fi
 done
-echo "VisualServices marked ready for ansible"
+echo "Services marked ready for ansible"
 

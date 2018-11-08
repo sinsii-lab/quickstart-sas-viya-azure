@@ -27,7 +27,7 @@
       mkdir -p /backups
       yum -y install nfs-utils autofs
       echo "/- /etc/auto.backups" > /etc/auto.master
-      echo "/backups -rw,soft,uid=$(id sas -u),gid=$(id sas -g) stateful.viya.sas:/opt/sas/backups" > /etc/auto.backups
+      echo "/backups -rw,soft,uid=$(id sas -u),gid=$(id sas -g) services:/opt/sas/backups" > /etc/auto.backups
       systemctl start autofs
       systemctl enable autofs
       chown sas:sas /backups

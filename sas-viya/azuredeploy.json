@@ -87,7 +87,7 @@
     "Services_VMsize": "Standard_E8s_v3",
     "Services_name": "services",
     "DiagnosticStorageGroupName": "[toLower(concat('rg4diag', variables('resourceGroupUniqueString')))]",
-    "PrimaryUserName": "sas_base",
+    "PrimaryUserName": "vmuser",
     "ExtensionAnsibleURI": "[concat(parameters('_artifactsLocation'), '/sas-viya/nestedtemplates/run_ansible_script.json', parameters('_artifactsLocationSasToken'))]",
     "NetworkCreateTemplateURI": "[concat(parameters('_artifactsLocation'), '/sas-viya/nestedtemplates/createNetworkSubtemplate.json', parameters('_artifactsLocationSasToken'))]",
     "AlternateDomain": "[concat('viya-', subscription().subscriptionId, '-', variables('resourceGroupUniqueString'))]",

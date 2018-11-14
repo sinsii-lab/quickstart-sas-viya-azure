@@ -1,9 +1,11 @@
 ---
 - hosts: localhost
   vars:
-    INVENTORIES_DIRECTORY: "/exports/bastion/setup/ansible/inventory"
-    GROUPS_DIRECTORY: "/exports/bastion/setup/ansible/groups"
-    PLAYBOOK_DIRECTORY: "/exports/bastion/setup/code/playbooks"
+    ANSIBLE_FLAG_DIR: "/exports/bastion/setup/ansible"
+    INVENTORIES_DIRECTORY: "{{ ANSIBLE_FLAG_DIR }}/inventory"
+    GROUPS_DIRECTORY: "{{ ANSIBLE_FLAG_DIR }}/groups"
+    CODE_DIRECTORY: "/exports/bastion/setup/code"
+    PLAYBOOK_DIRECTORY: "{{ CODE_DIRECTORY }}/playbooks"
     PLAYBOOK_ASSEMBLY_DIRECTORY: "{{ PLAYBOOK_DIRECTORY }}/inventory_assembly"
     PLAYBOOK_HOSTS_BLOCK: "{{ PLAYBOOK_ASSEMBLY_DIRECTORY }}/01.inventory.ini"
     PLAYBOOK_GROUP_BLOCK: "{{ PLAYBOOK_ASSEMBLY_DIRECTORY }}/03.inventory.ini"

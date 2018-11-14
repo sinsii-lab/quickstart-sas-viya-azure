@@ -5,6 +5,9 @@
   set_fact:
     ORCHESTRATION_URL: "{{ SAS[SAS_LICENSE.viya_version].ORCHESTRATION_URL }}"
     VIRK_COMMIT: "{{ SAS[SAS_LICENSE.viya_version].VIRK_COMMIT }}"
+    MIRROR_MANAGER_URL: "{{ SAS[SAS_LICENSE.viya_version].MIRROR_MANAGER_URL }}"
+    ORCHESTRATION_MIRROR_MANAGER: "{{ SAS[SAS_LICENSE.viya_version].ORCHESTRATION_MIRROR_MANAGER }}"
+    USE_MIRROR: "{{ SAS[SAS_LICENSE.viya_version].USE_MIRROR }}"
 
 
   
@@ -25,6 +28,52 @@
   become: no
   delegate_to: localhost
   run_once: true
+
+- name: Preexisting mirror
+  block:
+  - name: set mirror usage to true
+    set_fact:
+      USE_MIRROR: "True"
+
+  - name: "Download and unpack the mirror files from compressed archive at: {{ MIRROR_HTTP }}"
+    unarchive:
+      remote_src: yes
+      src: "{{ MIRROR_HTTP }}"
+      dest: "{{ REMOTE_DIRECTORY_MIRROR }}"
+    become: no
+    delegate_to: controller
+    run_once: true
+    when: "MIRROR_HTTP.split('?')[0].endswith('.zip') or MIRROR_HTTP.split('?')[0].endswith('.tgz') or MIRROR_HTTP.split('?')[0].endswith('.tar.gz') or MIRROR_HTTP.split('?')[0].endswith('.tar.bz2') or MIRROR_HTTP.split('?')[0].endswith('.tbz') or MIRROR_HTTP.split('?')[0].endswith('.tar.xz') or MIRROR_HTTP.split('?')[0].endswith('.txz')"
+
+  - fail:
+      msg: "Supplied Mirror must be an archive file type zip, .tar.gz, .tar.bz2, or .tar.xz"
+    when: "not (MIRROR_HTTP.split('?')[0].endswith('.zip') or MIRROR_HTTP.split('?')[0].endswith('.tgz') or MIRROR_HTTP.split('?')[0].endswith('.tar.gz') or MIRROR_HTTP.split('?')[0].endswith('.tar.bz2') or MIRROR_HTTP.split('?')[0].endswith('.tbz') or MIRROR_HTTP.split('?')[0].endswith('.tar.xz') or MIRROR_HTTP.split('?')[0].endswith('.txz'))"
+  when: "MIRROR_HTTP != ''"
+
+- name: Mirror needing downloading from sas (only works 3.4 and above, otherwise will be done as part of install).
+  block:
+  - name: "Download and unpack the mirror manager files for sas from: {{ MIRROR_MANAGER_URL }}"
+    unarchive:
+      remote_src: yes
+      src: "{{ MIRROR_MANAGER_URL }}"
+      dest: "{{ ORCHESTRATION_DIRECTORY }}"
+      creates: "{{ ORCHESTRATION_MIRROR_MANAGER }}"
+    become: no
+    delegate_to: localhost
+    run_once: true
+
+  - name: "Use mirror manager to download a copy of the mirror from sas"
+    shell: >-
+      time "{{ ORCHESTRATION_MIRROR_MANAGER }}" mirror --deployment-data "{{ LICENSE_FILE }}" --latest --platform x64-redhat-linux-6 --workers 4 -p "{{ LOCAL_DIRECTORY_MIRROR }}" -d
+    retries: 5
+    delay: 10
+    register: result
+    until: result.rc == 0
+    delegate_to: localhost
+    run_once: true
+
+
+  when: "USE_MIRROR and MIRROR_HTTP == ''"
     
 - name: "Download and unpack the orchestration files for sas from: {{ ORCHESTRATION_URL }}"
   unarchive:
@@ -38,7 +87,7 @@
     
 - name: Build Orchestration block for sas
   shell: >-
-    {{ ORCHESTRATION_DIRECTORY }}/sas-orchestration --verbose build --input {{ LICENSE_FILE }} --output "{{ ORCHESTRATION_DIRECTORY }}/SAS_Viya_playbook.tgz"
+    {{ ORCHESTRATION_DIRECTORY }}/sas-orchestration --verbose build --input {{ LICENSE_FILE }} --output "{{ ORCHESTRATION_DIRECTORY }}/SAS_Viya_playbook.tgz" {% if USE_MIRROR %} --repository-warehouse "file://{{ REMOTE_DIRECTORY_MIRROR }}" {% endif %}
   args:
     chdir: "{{ ORCHESTRATION_DIRECTORY }}"
     creates: "{{ ORCHESTRATION_DIRECTORY }}/SAS_Viya_playbook.tgz"

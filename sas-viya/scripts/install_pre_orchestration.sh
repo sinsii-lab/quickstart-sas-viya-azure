@@ -18,7 +18,7 @@ export ANSIBLE_ANY_ERRORS_FATAL=True
 
 cd $ScriptDirectory/../playbooks
 
-time ansible-playbook -i $INVENTORY_FILE -v create_main_inventory.yml
+time ansible-playbook -i $INVENTORY_FILE -v create_main_inventory.yml -e CODE_DIRECTORY="${CODE_DIRECTORY}" -e GROUPS_DIRECTORY="${DIRECTORY_ANSIBLE_GROUPS}" -e INVENTORIES_DIRECTORY="${DIRECTORY_ANSIBLE_INVENTORIES}"
 ret="$?"
 if [ "$ret" -ne "0" ]; then
     exit $ret
@@ -27,16 +27,16 @@ fi
 if [ -n "$USERPASS" ]; then
 	echo "$(date) Install and set up OpenLDAP (see deployment-openldap.log)"
 
-	time ansible-playbook -v -f $FORKS "${DIRECTORY_GIT_LOCAL_COPY}/openldap/openldapsetup.yml" -i $INVENTORY_FILE -e "OLCROOTPW='$ADMINPASS' OLCUSERPW='$USERPASS'"
+	time ansible-playbook -v -f $FORKS "${CODE_DIRECTORY}/openldap/openldapsetup.yml" -i $INVENTORY_FILE -e "OLCROOTPW='$ADMINPASS' OLCUSERPW='$USERPASS'"
 	ret="$?"
 	if [ "$ret" -ne "0" ]; then
 		exit $ret
 	fi
 	rm -f "${ORCHESTRATION_DIRECTORY}/sas_viya_playbook/roles/consul/files/sitedefault.yml"
-	cp "${DIRECTORY_GIT_LOCAL_COPY}/openldap/sitedefault.yml" "${ORCHESTRATION_DIRECTORY}/sas_viya_playbook/roles/consul/files/"
+	cp "${CODE_DIRECTORY}/openldap/sitedefault.yml" "${ORCHESTRATION_DIRECTORY}/sas_viya_playbook/roles/consul/files/"
 fi
 
-time ansible-playbook -f $FORKS -i $INVENTORY_FILE -v pre.deployment.yml -e VIRK_CLONE_DIRECTORY="$VIRK_CLONE_DIRECTORY" -e ORCHESTRATION_DIRECTORY="$ORCHESTRATION_DIRECTORY" -e "sasboot_pw='$ADMINPASS'" -e "OLCROOTPW='$ADMINPASS' OLCUSERPW='$USERPASS'"
+time ansible-playbook -f $FORKS -i $INVENTORY_FILE -v pre.deployment.yml -e VIRK_CLONE_DIRECTORY="$VIRK_CLONE_DIRECTORY" -e ORCHESTRATION_DIRECTORY="$ORCHESTRATION_DIRECTORY" -e "sasboot_pw='$ADMINPASS'" -e "OLCROOTPW='$ADMINPASS' OLCUSERPW='$USERPASS'" -e LOCAL_DIRECTORY_MIRROR="${DIRECTORY_MIRROR}" -e REMOTE_DIRECTORY_MIRROR="${REMOTE_DIRECTORY_MIRROR}" -e MIRROR_HTTP="${MIRROR_HTTP}" -e LICENSE_FILE="${FILE_LICENSE_FILE}" -e SSL_WORKING_FOLDER="${DIRECTORY_SSL_JSON_FILE}" -e CODE_DIRECTORY="${CODE_DIRECTORY}"
 ret="$?"
 if [ "$ret" -ne "0" ]; then
     exit $ret

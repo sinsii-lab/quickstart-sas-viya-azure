@@ -26,29 +26,6 @@
         - "{{ SAS_LICENSE.products }}"
       when: "item.identifier == 'PRODNUM1141'"
 
-#    - name: setting cas size for 4 cores
-#      blockinfile:
-#        path: "{{ CAS_SIZING_FILE }}"
-#        marker: "#DATA#"
-#        block: >-
-#          Standard_E4s_v3
-#      when: CAS_SERVER_LICENCED_CORES == '4' or CAS_SERVER_LICENCED_CORES == '999'
-#
-#    - name: setting cas size for 8 cores
-#      blockinfile:
-#        marker: "#DATA#"
-#        path: "{{ CAS_SIZING_FILE }}"
-#        block: >-
-#          Standard_E8s_v3
-#      when: CAS_SERVER_LICENCED_CORES == '8'
-#
-#    - name: setting cas size for 16 cores
-#      blockinfile:
-#        marker: "#DATA#"
-#        path: "{{ CAS_SIZING_FILE }}"
-#        block: >-
-#          Standard_E16s_v3
-#      when: CAS_SERVER_LICENCED_CORES == '16'
 
     - name: setting cas size for 4 cores
       set_fact:

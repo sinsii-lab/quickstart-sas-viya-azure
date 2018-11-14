@@ -51,6 +51,13 @@
         "description": "Password of the default SAS User (sasuser). If left empty, no default users are created. (WARNING: If not set, deployment will require additional setup steps before it is usable)."
       }
     },
+    "DeploymentMirror": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "OPTIONAL: Specifies the https location of a sas mirror. Mirror should be in the form of a .tgz/.tar.gz file"
+      }
+    },
     "_artifactsLocationSasToken": {
       "type": "string",
       "defaultValue": "",
@@ -342,7 +349,7 @@
       "type": "Microsoft.Network/applicationGateways",
       "name": "[variables('LoadBalancerName')]",
       "apiVersion": "2018-02-01",
-      "location": "eastus",
+      "location": "[parameters('location')]",
       "scale": null,
       "properties": {
         "sku": {
@@ -728,7 +735,17 @@
             },
             "diskSizeGB": 32
           },
-          "dataDisks": []
+          "dataDisks": [
+            {
+              "lun": 0,
+              "name": "[concat(variables('AnsibleController_name'),'ExportDisk')]",
+              "createOption": "Empty",
+              "managedDisk": {
+                "storageAccountType": "Premium_LRS"
+              },
+              "diskSizeGB": 60
+            }
+          ]
         },
         "osProfile": {
           "computerName": "[variables('AnsibleController_name')]",
@@ -788,7 +805,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('./ansiblecontroller_startup.sh \"1\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" &> /tmp/runAnsiblePhase1_SetupPrerequisites.log')]"
+            "value": "[concat('./ansiblecontroller_startup.sh \"1\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" &> /tmp/runAnsiblePhase1_SetupPrerequisites.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -820,7 +837,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('./ansiblecontroller_startup.sh \"2\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" | tee /tmp/runAnsiblePhase2_ReturnCasSize.log')]"
+            "value": "[concat('./ansiblecontroller_startup.sh \"2\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" | tee /tmp/runAnsiblePhase2_ReturnCasSize.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -852,7 +869,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('./ansiblecontroller_startup.sh \"3\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" | tee /tmp/runAnsiblePhase3_CertificateExport_1.log')]"
+            "value": "[concat('./ansiblecontroller_startup.sh \"3\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" | tee /tmp/runAnsiblePhase3_CertificateExport_1.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -884,7 +901,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('./ansiblecontroller_startup.sh \"4\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" | tee /tmp/runAnsiblePhase4_CertificateExport_2.log')]"
+            "value": "[concat('./ansiblecontroller_startup.sh \"4\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" | tee /tmp/runAnsiblePhase4_CertificateExport_2.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -916,7 +933,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('./ansiblecontroller_startup.sh \"6\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" | tee /tmp/runAnsiblePhase6_SAS_CA_CRT.log')]"
+            "value": "[concat('./ansiblecontroller_startup.sh \"6\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" | tee /tmp/runAnsiblePhase6_SAS_CA_CRT.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -948,7 +965,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('./ansiblecontroller_startup.sh \"5\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" &> /tmp/runAnsiblePhase5_PRE_INSTALL.log')]"
+            "value": "[concat('./ansiblecontroller_startup.sh \"5\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" &> /tmp/runAnsiblePhase5_PRE_INSTALL.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -980,7 +997,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('./ansiblecontroller_startup.sh \"7\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" &> /tmp/runAnsiblePhase7Part1_SAS_INSTALL.log')]"
+            "value": "[concat('./ansiblecontroller_startup.sh \"7\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" &> /tmp/runAnsiblePhase7Part1_SAS_INSTALL.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -1012,7 +1029,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('./ansiblecontroller_startup.sh \"7\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" &> /tmp/runAnsiblePhase7Part2_SAS_INSTALL.log')]"
+            "value": "[concat('./ansiblecontroller_startup.sh \"7\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" &> /tmp/runAnsiblePhase7Part2_SAS_INSTALL.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -1044,7 +1061,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('./ansiblecontroller_startup.sh \"7\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" &> /tmp/runAnsiblePhase7Part3_SAS_INSTALL.log')]"
+            "value": "[concat('./ansiblecontroller_startup.sh \"7\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" &> /tmp/runAnsiblePhase7Part3_SAS_INSTALL.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -1076,7 +1093,7 @@
             "value": "[variables('AnsibleController_name')]"
           },
           "commandToExecute": {
-            "value": "[concat('./ansiblecontroller_startup.sh \"8\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" &> /tmp/runAnsiblePhase8_POST_INSTALL.log')]"
+            "value": "[concat('./ansiblecontroller_startup.sh \"8\" \"', parameters('_artifactsLocation'), '\" \"', parameters('_artifactsLocationSasToken'), '\" \"', parameters('DeploymentDataLocation'),  '\" \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'),'\" \"', variables('Base64UserPass'), '\" \"', variables('VirtualNetworkPrivateSubnetCIDR'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('LoadBalancerName'), '_PublicIP'))).dnsSettings.fqdn, '\" \"', parameters('DeploymentMirror'), '\" &> /tmp/runAnsiblePhase8_POST_INSTALL.log')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -1274,7 +1291,7 @@
           "skipDos2Unix": false
         },
         "protectedSettings": {
-          "commandToExecute": "[ concat('./nonansiblecontroller_prereqs.sh \"', variables('PrimaryUserName'), '\" \"', variables('AnsibleController_name'),'\" \"CasControllerServers\" > /tmp/proofIRan.log')]",
+          "commandToExecute": "[ concat('./nonansiblecontroller_prereqs.sh \"', variables('PrimaryUserName'), '\" \"', variables('AnsibleController_name'),'\" \"CasControllerServers\" &> /tmp/prerequisites.log')]",
           "fileUris": [
             "[concat(parameters('_artifactsLocation'), '/sas-viya/scripts/nonansiblecontroller_prereqs.sh', parameters('_artifactsLocationSasToken'))]"
           ]
@@ -1562,7 +1579,7 @@
           "skipDos2Unix": false
         },
         "protectedSettings": {
-          "commandToExecute": "[ concat('./nonansiblecontroller_prereqs.sh \"', variables('PrimaryUserName'), '\" \"', variables('AnsibleController_name'),'\" \"VisualServicesServers,ProgrammingServicesServers,StatefulServicesServers\" > /tmp/proofIRan.log')]",
+          "commandToExecute": "[ concat('./nonansiblecontroller_prereqs.sh \"', variables('PrimaryUserName'), '\" \"', variables('AnsibleController_name'),'\" \"VisualServicesServers,ProgrammingServicesServers,StatefulServicesServers\" &> /tmp/prerequisites.log')]",
           "fileUris": [
             "[concat(parameters('_artifactsLocation'), '/sas-viya/scripts/nonansiblecontroller_prereqs.sh', parameters('_artifactsLocationSasToken'))]"
           ]

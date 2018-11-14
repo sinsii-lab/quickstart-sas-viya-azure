@@ -7,7 +7,7 @@
     lineinfile:
       dest: "{{ ORCHESTRATION_VARS }}"
       regexp: "CAS_DISK_CACHE:"
-      line: "     CAS_DISK_CACHE: /sastmp/cascache"
+      line: "     CAS_DISK_CACHE: /mnt/resource/sastmp/cascache"
     run_once: true
     delegate_to: localhost
 
@@ -25,8 +25,8 @@
       marker: "# {mark} add saswork location"
       block: |
         SASV9_CONFIGURATION:
-          1: '/* this will send the SASWORK to the /sastmp location */'
-          2: 'WORK /sastmp/saswork'
+          1: '/* this will send the SASWORK to the /mnt/resource/sastmp location */'
+          2: 'WORK /mnt/resource/sastmp/saswork'
     run_once: true
     delegate_to: localhost
 

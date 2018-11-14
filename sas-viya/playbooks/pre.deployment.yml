@@ -19,7 +19,7 @@
   tasks:
     - name: create saswork subdir
       file:
-        path: /sastmp/saswork
+        path: /mnt/resource/sastmp/saswork
         state: directory
         mode: 0777
       
@@ -32,7 +32,7 @@
         state: directory
     - name: create cascache subdir
       file:
-        path: /sastmp/cascache
+        path: /mnt/resource/sastmp/cascache
         state: directory
         mode: 0777
 
@@ -41,11 +41,11 @@
 - hosts: all
   become: yes
   become_user: root
-  vars:
-    LICENSE_FILE: "/exports/bastion/setup/license/license_file.zip"
-    VIRK_CLONE_DIRECTORY: "/exports/bastion/setup/virk"
-    ORCHESTRATION_DIRECTORY: "/exports/bastion/setup/orchestration"
-    CODE_DIRECTORY: "/exports/bastion/setup/code"
+#  vars:
+#    LICENSE_FILE: "/exports/bastion/setup/license/license_file.zip"
+#    VIRK_CLONE_DIRECTORY: "/exports/bastion/setup/virk"
+#    ORCHESTRATION_DIRECTORY: "/exports/bastion/setup/orchestration"
+#    CODE_DIRECTORY: "/exports/bastion/setup/code"
   tasks:
     - import_role:
         name: read_sas_license_information

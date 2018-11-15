@@ -76,15 +76,15 @@ If you are using SAS/ACCESS to ODBC, unvalidated SSL certificates are not suppor
 
 ### Set Up ODBC and Microsoft SQL Server
 1. Locate the following two odbc.ini files:
-* CAS controller:/opt/sas/viya/home/lib64/accessclients/odbc.ini
-* SAS Viya services:/opt/sas/spre/home/lib64/accessclients/odbc.ini
+* CAS controller: ```/opt/sas/viya/home/lib64/accessclients/odbc.ini```
+* SAS Viya services: ```/opt/sas/spre/home/lib64/accessclients/odbc.ini```
 
-2. Modify the parameters per the following examples.  FOr details about how to configure ODBC, see the SAS Viya 
+2. Modify the parameters per the following examples.  FOr details about how to configure:
+* For detailed information about configuring data access, see 
+ ["Configure Data Access"]({https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.4&locale=en) in the SAS Viya Deployment Guide.
+* For specific DataDirect information, see ["Configuration Through the System Information (odbc.ini) File"](https://documentation.progress.com/output/DataDirect/odbcsqlserverhelp/index.html#page/odbcsqlserver%2Fconfiguration-through-the-system-information-(od.html%23)).
 
-For specific
-https://documentation.progress.com/output/DataDirect/odbcsqlserverhelp/index.html#page/odbcsqlserver%2Fconfiguration-through-the-system-information-(od.html%23
-
-  2a. For SQLServer:
+3. For SQLServer:
 
 Specify the appropriate driver location:
 * For SAS Viya, /opt/sas/spre/home/lib64/accessclients/lib/S0sqls27.so 
@@ -113,7 +113,7 @@ Database=sqlserver
 EnableBulkLoad=0 
 EnableQuotedIdentifiers=0
 ```
-   2b. To set the encryption method, set EncryptionMethod to 0 for no SSL or 1 for SSL. 
+4.To set the encryption method, set EncryptionMethod to 0 for no SSL or 1 for SSL. 
 ```
 EncryptionMethod=1 
 FailoverGranularity=0 
@@ -142,7 +142,7 @@ SnapshotSerializable=0
 TrustStore= 
 TrustStorePassword=
 ```
-   2c. if you want SSL but require a certificate, set ValidateServerCertificate to 1. 
+5. if you want SSL but require a certificate, set ValidateServerCertificate to 1. 
   ``` 
 ValidateServerCertificate=0 
 WorkStationID= 
@@ -150,7 +150,7 @@ XMLDescribeType=-10
 SSLLibName=/usr/lib64/libssl.so.1.0.2k 
 CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
 ```
-3. Save the odbc.ini files 
+6. Save the odbc.ini files. 
 
 
 ## Usage 
@@ -191,7 +191,8 @@ ldapsearch -x -h <YOUR LDAP HOST> -b <YOUR DN> -D <YOUR LDAP SERVICE ACCOUNT> -W
 ```
 4.	Enter the password to your LDAP service account.
 If verification is successful, the list of your users and groups is displayed.
-##Configure PAM for SAS Studio
+
+## Configure PAM for SAS Studio
 SAS Studio does not use the SAS Logon Manager, and thus has different requirements for integration with an LDAP system. SAS Studio manages authentication through a pluggable authentication module (PAM). You can use System Security Services Daemon (SSSD) to integrate the programming machine's (Prog) PAM configuration with your LDAP system.
 To access SAS Studio the following conditions must be met:
 *	The user must exist locally on the system.
@@ -203,7 +204,7 @@ After SSSD has been configured, you may need to restart the Prog machine.
 ## Addendum B: Managing Users for the Provided OpenLDAP Server
 
 ### To log in and list all users and groups:
-From the Ansible controller VM, log into the 'Stateful' VM with 
+From the Ansible controller VM, log into the 'Stateful' VM: 
 ```
 ssh stateful.viya.sas
 ```
@@ -272,6 +273,3 @@ ldappasswd –h localhost –s USERPASSWORD –W –D cn=admin,dc=sasviya,dc=com
 ```
 ldapdelete –h localhost -W -D "cn=admin,dc=sasviya,dc=com" "uid=newuser,ou=users,dc=sasviya,dc=com"
 ```
-
-
-

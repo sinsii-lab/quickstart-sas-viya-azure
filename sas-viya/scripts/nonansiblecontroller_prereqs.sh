@@ -25,6 +25,11 @@ fi
 csv_group_list="$3"
 
 
+# to workaround the strange issues azure has had with certs in yum, run yum update twice.
+yum update -y rhui-azure-rhel7
+yum update -y --exclude=WALinuxAgent
+
+
 # remove the requiretty from the sudoers file. Per bug https://bugzilla.redhat.com/show_bug.cgi?id=1020147 this is unnecessary and has been removed on future releases of redhat, 
 # so is just a slowdown that denies pipelining and makes the non-tty session from azure extentions break on sudo without faking one (my prefered method is ssh back into the same user, but seriously..)
 sed -i -e '/Defaults    requiretty/{ s/.*/# Defaults    requiretty/ }' /etc/sudoers

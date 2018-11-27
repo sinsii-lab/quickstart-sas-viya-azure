@@ -89,7 +89,7 @@
     "LoadBalancerName": "PrimaryViyaLoadbalancer",
     "LoadBalancerNetworkSecurityGroup": "[concat(variables('LoadBalancerName'), '_NetworkSecurityGroup')]",
     "AnsibleController_name": "Ansible",
-    "AnsibleController_VMsize": "Standard_B1s",
+    "AnsibleController_VMsize": "Standard_B2s",
     "CASController_name": "controller",
     "Services_VMsize": "Standard_E8s_v3",
     "Services_name": "services",
@@ -722,7 +722,7 @@
           "imageReference": {
             "publisher": "RedHat",
             "offer": "RHEL",
-            "sku": "7.2",
+            "sku": "7.4",
             "version": "latest"
           },
           "osDisk": {
@@ -1206,7 +1206,7 @@
           "imageReference": {
             "publisher": "RedHat",
             "offer": "RHEL",
-            "sku": "7.2",
+            "sku": "7.4",
             "version": "latest"
           },
           "osDisk": {
@@ -1495,7 +1495,7 @@
           "imageReference": {
             "publisher": "RedHat",
             "offer": "RHEL",
-            "sku": "7.2",
+            "sku": "7.4",
             "version": "latest"
           },
           "osDisk": {

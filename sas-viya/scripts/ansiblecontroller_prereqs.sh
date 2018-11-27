@@ -21,6 +21,10 @@ if [ -z "$PRIMARY_USER" ]; then
 	PRIMARY_USER="sas"
 fi
 
+# to workaround the strange issues azure has had with certs in yum, run yum update twice.
+yum update -y rhui-azure-rhel7
+yum update -y --exclude=WALinuxAgent
+
 if ! type -p ansible;  then
    # install Ansible
    # pip install 'ansible==2.4.0'

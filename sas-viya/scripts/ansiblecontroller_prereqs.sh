@@ -23,7 +23,7 @@ fi
 
 # to workaround the strange issues azure has had with certs in yum, run yum update twice.
 yum update -y rhui-azure-rhel7
-yum update -y --exclude=WALinuxAgent
+#yum update -y --exclude=WALinuxAgent
 
 if ! type -p ansible;  then
    # install Ansible
@@ -35,22 +35,41 @@ fi
 # so is just a slowdown that denies pipelining and makes the non-tty session from azure extentions break on sudo without faking one (my prefered method is ssh back into the same user, but seriously..)
 sed -i -e '/Defaults    requiretty/{ s/.*/# Defaults    requiretty/ }' /etc/sudoers
 
-### Create AnsibleController nfs mount for sharing importaint stuff
+
 echo "$(date)"
-echo "setup nfs"
-yum install -y nfs-utils libnfsidmap
+echo "Creating the share on the storage account."
+rpm --import https://packages.microsoft.com/keys/microsoft.asc
+sh -c 'echo -e "[azure-cli]\nname=Azure CLI\nbaseurl=https://packages.microsoft.com/yumrepos/azure-cli\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azure-cli.repo'
+yum install -y azure-cli
+az storage share create --name ${azure_storage_files_share} --connection-string "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=${azure_storage_account};AccountKey=${azure_storage_files_password}"
 
-systemctl enable rpcbind
-systemctl enable nfs-server
-systemctl start rpcbind
-systemctl start nfs-server
-systemctl start rpc-statd
-systemctl start nfs-idmapd
+echo "setup cifs"
+cifs_server_fqdn="${azure_storage_account}.file.core.windows.net"
+yum install -y cifs-utils
 
-firewall-cmd --permanent --add-service=nfs
-firewall-cmd --permanent --add-service=mountd
+if [ ! -d "/etc/smbcredentials" ]; then
+    sudo mkdir /etc/smbcredentials
+fi
+chmod 700 /etc/smbcredentials
+if [ ! -f "/etc/smbcredentials/${azure_storage_account}.cred" ]; then
+    echo "username=${azure_storage_account}" >> /etc/smbcredentials/${azure_storage_account}.cred
+    echo "password=${azure_storage_files_password}" >> /etc/smbcredentials/${azure_storage_account}.cred
+fi
+chmod 600 "/etc/smbcredentials/${azure_storage_account}.cred"
 
-firewall-cmd --reload
+mkdir -p "${DIRECTORY_NFS_SHARE}"
+echo "//${cifs_server_fqdn}/${azure_storage_files_share} ${DIRECTORY_NFS_SHARE}  cifs vers=3.0,credentials=/etc/smbcredentials/${azure_storage_account}.cred,dir_mode=0777,file_mode=0777,sec=ntlmssp 0 0" >> /etc/fstab
+#mount -a
+
+mount "${DIRECTORY_NFS_SHARE}"
+RET=$?
+if [ "$RET" -ne "0" ]; then
+    exit $RET
+fi
+echo "Mounting Successful"
+
+
+
 # load the code from remote
 echo "$(date)"
 echo "download all files from file tree"
@@ -78,13 +97,13 @@ done <file_list.txt
 
 
 
-mkdir -p "$DIRECTORY_NFS_SHARE"
-
-time ansible-playbook -v ${CODE_DIRECTORY}/playbooks/ansible_prerequisites_export_mount.yml -e MOUNT_POINT="$DIRECTORY_NFS_SHARE"
-ret="$?"
-if [ "$ret" -ne "0" ]; then
-    exit $ret
-fi
+#mkdir -p "$DIRECTORY_NFS_SHARE"
+#
+#time ansible-playbook -v ${CODE_DIRECTORY}/playbooks/ansible_prerequisites_export_mount.yml -e MOUNT_POINT="$DIRECTORY_NFS_SHARE"
+#ret="$?"
+#if [ "$ret" -ne "0" ]; then
+#    exit $ret
+#fi
 
 #Now make the sharing structure
 mkdir -p "${DIRECTORY_ANSIBLE_KEYS}"

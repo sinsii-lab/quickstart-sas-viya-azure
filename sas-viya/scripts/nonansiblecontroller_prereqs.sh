@@ -6,56 +6,63 @@
 set -x
 set -v
 
-DIRECTORY_NFS_SHARE="/exports/bastion"
-NFS_MOUNT_POINT="/mnt/AnsibleController/bastion"
-NFS_SEMAPHORE_DIR="${NFS_MOUNT_POINT}/setup/readiness_flags"
-NFS_ANSIBLE_KEYS="${NFS_MOUNT_POINT}/setup/ansible_key"
-NFS_ANSIBLE_INVENTORIES_DIR="${NFS_MOUNT_POINT}/setup/ansible/inventory"
-NFS_ANSIBLE_GROUPS_DIR="${NFS_MOUNT_POINT}/setup/ansible/groups"
-
 if [ -z "$1" ]; then
 	PRIMARY_USER="sas"
 else
 	PRIMARY_USER="$1"
 fi
-nfs_server_fqdn="$2"
-if [ -z "$nfs_server_fqdn" ]; then
-	nfs_server_fqdn="ansible"
-fi
-csv_group_list="$3"
+azure_storage_account="$2"
+azure_storage_files_share="$3"
+azure_storage_files_password="$4"
+csv_group_list="$5"
 
+CIFS_MOUNT_POINT="/mnt/${azure_storage_files_share}"
+CIFS_SEMAPHORE_DIR="${CIFS_MOUNT_POINT}/setup/readiness_flags"
+CIFS_ANSIBLE_KEYS="${CIFS_MOUNT_POINT}/setup/ansible_key"
+CIFS_ANSIBLE_INVENTORIES_DIR="${CIFS_MOUNT_POINT}/setup/ansible/inventory"
+CIFS_ANSIBLE_GROUPS_DIR="${CIFS_MOUNT_POINT}/setup/ansible/groups"
+cifs_server_fqdn="${azure_storage_account}.file.core.windows.net"
 
 # to workaround the strange issues azure has had with certs in yum, run yum update twice.
 yum update -y rhui-azure-rhel7
-yum update -y --exclude=WALinuxAgent
+#yum update -y --exclude=WALinuxAgent
 
 
 # remove the requiretty from the sudoers file. Per bug https://bugzilla.redhat.com/show_bug.cgi?id=1020147 this is unnecessary and has been removed on future releases of redhat, 
 # so is just a slowdown that denies pipelining and makes the non-tty session from azure extentions break on sudo without faking one (my prefered method is ssh back into the same user, but seriously..)
 sed -i -e '/Defaults    requiretty/{ s/.*/# Defaults    requiretty/ }' /etc/sudoers
 
-yum install -y nfs-utils rpcbind postfix
+yum install -y cifs-utils
 
-systemctl enable postfix
-systemctl start postfix
+if [ ! -d "/etc/smbcredentials" ]; then
+    sudo mkdir /etc/smbcredentials
+fi
+chmod 700 /etc/smbcredentials
+if [ ! -f "/etc/smbcredentials/${azure_storage_account}.cred" ]; then
+    echo "username=${azure_storage_account}" >> /etc/smbcredentials/${azure_storage_account}.cred
+    echo "password=${azure_storage_files_password}" >> /etc/smbcredentials/${azure_storage_account}.cred
+fi
+chmod 600 "/etc/smbcredentials/${azure_storage_account}.cred"
 
-mkdir -p "${NFS_MOUNT_POINT}"
-echo "${nfs_server_fqdn}:${DIRECTORY_NFS_SHARE} ${NFS_MOUNT_POINT}  nfs rw,hard,intr,bg 0 0" >> /etc/fstab
+mkdir -p "${CIFS_MOUNT_POINT}"
+echo "//${cifs_server_fqdn}/${azure_storage_files_share} ${CIFS_MOUNT_POINT}  cifs vers=3.0,credentials=/etc/smbcredentials/${azure_storage_account}.cred,dir_mode=0777,file_mode=0777,sec=ntlmssp 0 0" >> /etc/fstab
 #mount -a
 
-mount "${NFS_MOUNT_POINT}"
+mount "${CIFS_MOUNT_POINT}"
 RET=$?
 while [ "$RET" -gt "0" ]; do
 	echo "Waiting 5 seconds for mount to be possible"
 	sleep 5
-	mount "${NFS_MOUNT_POINT}"
+	mount "${CIFS_MOUNT_POINT}"
 	RET=$?
 done
 echo "Mounting Successful"
+mkdir -p "${CIFS_MOUNT_POINT}/backup"
+ln -s "${CIFS_MOUNT_POINT}/backup" /backups
 
 wait_count=0
 stop_waiting_count=600
-ANSIBLE_AUTHORIZED_KEY_FILE="${NFS_ANSIBLE_KEYS}/id_rsa.pub"
+ANSIBLE_AUTHORIZED_KEY_FILE="${CIFS_ANSIBLE_KEYS}/id_rsa.pub"
 while [ ! -e "$ANSIBLE_AUTHORIZED_KEY_FILE" ]; do
 	echo "waiting 5 seconds for key to come around"
 	sleep 1
@@ -85,7 +92,7 @@ echo "${HOSTNAME}" >> "$ansible_temp_filename"
 done
 IFS="$OLD_IFS"
 su - ${PRIMARY_USER} <<END
-touch "${NFS_SEMAPHORE_DIR}/$(hostname)_ready"
-echo "$INVENTORY_LINE" > "${NFS_ANSIBLE_INVENTORIES_DIR}/$(hostname)_inventory_line"
-cat "$ansible_temp_filename" > "${NFS_ANSIBLE_GROUPS_DIR}/$(hostname)_inventory_groups"
+touch "${CIFS_SEMAPHORE_DIR}/$(hostname)_ready"
+echo "$INVENTORY_LINE" > "${CIFS_ANSIBLE_INVENTORIES_DIR}/$(hostname)_inventory_line"
+cat "$ansible_temp_filename" > "${CIFS_ANSIBLE_GROUPS_DIR}/$(hostname)_inventory_groups"
 END

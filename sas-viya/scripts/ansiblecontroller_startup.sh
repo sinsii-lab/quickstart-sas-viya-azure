@@ -23,12 +23,18 @@ if [ -z "$ADMINPASS" ]; then
 fi
 export USERPASS="$7"
 
-export DIRECTORY_NFS_SHARE="/exports/bastion"
-export REMOTE_DIRECTORY_NFS_MOUNT="/mnt/AnsibleController/bastion"
-export SAS_INSTALL_SRC_DIRECTORY="/sas/install"
+
+
 export PRIVATE_SUBNET_IPRANGE="$8"
 export PUBLIC_DNS_NAME="$9"
 export MIRROR_HTTP="${10}"
+export azure_storage_account="${11}"
+export azure_storage_files_share="${12}"
+export azure_storage_files_password="${13}"
+
+export DIRECTORY_NFS_SHARE="/mnt/${azure_storage_files_share}"
+export REMOTE_DIRECTORY_NFS_MOUNT="/mnt/${azure_storage_files_share}"
+export SAS_INSTALL_SRC_DIRECTORY="/sas/install"
 
 export DIRECTORY_ANSIBLE_KEYS="${DIRECTORY_NFS_SHARE}/setup/ansible_key"
 export DIRECTORY_READYNESS_FLAGS="${DIRECTORY_NFS_SHARE}/setup/readiness_flags"

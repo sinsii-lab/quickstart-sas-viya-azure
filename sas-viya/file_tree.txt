@@ -33,6 +33,7 @@
 /outputs.jpg|664
 /playbooks/ansible.cfg|664
 /playbooks/ansible_prerequisites_export_mount.yml|664
+/playbooks/at.deployment.yml|664
 /playbooks/create.mirror.yml|775
 /playbooks/create_cas_sizing_file.yml|664
 /playbooks/create_load_balancer_cert.yml|664

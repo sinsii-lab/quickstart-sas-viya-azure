@@ -1,15 +1,29 @@
 ---
 # For all hosts that need an opt drive mounted to get more space, they should be in the NeedMountOptDrive group and will mount it here
 - hosts: 
-    - NeedMountOptDrive
+    - all
   become: true
   tasks:
-    - import_role:
-        name: mount_opt_disk
+  - name: run async yum update
+#    yum:
+#      name: "*"
+#      state: latest
+#      exclude: WALinuxAgent
+    command: >-
+      yum update -y --exclude WALinuxAgent
+    async: 1200
+#    poll: 0
+#    register: YUM_ASYNC
+
 # now create all of the directories needed for a sas install
 - hosts: sas-servers
   become: true
   tasks:
+    - import_role:
+        name: mount_opt_disk
+      vars:
+        SOURCE_DISK: ""
+        SOURCE_DISK_SIZE: "50.00 GB"
     - name: create viya installation subdir
       file:
         path: /opt/sas
@@ -35,36 +49,6 @@
         path: /mnt/resource/sastmp/cascache
         state: directory
         mode: 0777
-
-      
-# evaluate license and based on that, setup orchestration
-- hosts: all
-  become: yes
-  become_user: root
-#  vars:
-#    LICENSE_FILE: "/exports/bastion/setup/license/license_file.zip"
-#    VIRK_CLONE_DIRECTORY: "/exports/bastion/setup/virk"
-#    ORCHESTRATION_DIRECTORY: "/exports/bastion/setup/orchestration"
-#    CODE_DIRECTORY: "/exports/bastion/setup/code"
-  tasks:
-    - import_role:
-        name: read_sas_license_information
-    - import_role:
-        name: predeploy_sas_orchestration_virk
-    - name: copy site defaults for openldap
-      copy:
-        src: "{{ CODE_DIRECTORY }}/openldap/sitedefault.yml"
-        dest: "{{ ORCHESTRATION_DIRECTORY }}/sas_viya_playbook/roles/consul/files/sitedefault.yml"
-        remote_src: yes
-      delegate_to: localhost
-      run_once: true
-      when: "OLCUSERPW != ''"
-    - include_role:
-        name: _setup_sas_orchestration_inventory_config/3.3
-      when: "SAS_LICENSE.viya_version == '3.3'"
-    - include_role:
-        name: _setup_sas_orchestration_inventory_config/3.4
-      when: "SAS_LICENSE.viya_version == '3.4'"
 
 - hosts: sas-services
   become: yes

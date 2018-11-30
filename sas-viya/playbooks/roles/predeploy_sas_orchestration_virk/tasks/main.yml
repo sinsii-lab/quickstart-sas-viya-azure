@@ -12,14 +12,14 @@
 
   
 - name: Ensuring that Git is installed
-  yum: name={{ item }} state=latest  
+  yum:
+    name: "{{ item }}"
+    state: "latest"
   with_items: 
   - git
   - java-1.8.0-openjdk
   delegate_to: localhost
   run_once: true
-
-
     
 - name: create local orchestration directory
   file:
@@ -29,52 +29,182 @@
   delegate_to: localhost
   run_once: true
 
-- name: Preexisting mirror
+- name: mirror creation block
   block:
-  - name: set mirror usage to true
-    set_fact:
-      USE_MIRROR: "True"
+  - name: Preexisting mirror
+    block:
+    - name: set mirror usage to true
+      set_fact:
+        USE_MIRROR: "True"
+        MIRROR_IS_ZIP: "False"
+        MIRROR_IS_AZURE_BLOB_FOLDER: "False"
 
-  - name: "Download and unpack the mirror files from compressed archive at: {{ MIRROR_HTTP }}"
-    unarchive:
-      remote_src: yes
-      src: "{{ MIRROR_HTTP }}"
-      dest: "{{ REMOTE_DIRECTORY_MIRROR }}"
-    become: no
-    delegate_to: controller
-    run_once: true
-    when: "MIRROR_HTTP.split('?')[0].endswith('.zip') or MIRROR_HTTP.split('?')[0].endswith('.tgz') or MIRROR_HTTP.split('?')[0].endswith('.tar.gz') or MIRROR_HTTP.split('?')[0].endswith('.tar.bz2') or MIRROR_HTTP.split('?')[0].endswith('.tbz') or MIRROR_HTTP.split('?')[0].endswith('.tar.xz') or MIRROR_HTTP.split('?')[0].endswith('.txz')"
+    - name: Archive mirror
+      block:
+      - name: set that mirror is zip
+        set_fact:
+          MIRROR_IS_ZIP: "True"
+      - name: get archive_name
+        set_fact:
+          ARCHIVE_NAME: "archive.{{ MIRROR_HTTP.split('?')[0].split('.')[-1]}}"
 
-  - fail:
-      msg: "Supplied Mirror must be an archive file type zip, .tar.gz, .tar.bz2, or .tar.xz"
-    when: "not (MIRROR_HTTP.split('?')[0].endswith('.zip') or MIRROR_HTTP.split('?')[0].endswith('.tgz') or MIRROR_HTTP.split('?')[0].endswith('.tar.gz') or MIRROR_HTTP.split('?')[0].endswith('.tar.bz2') or MIRROR_HTTP.split('?')[0].endswith('.tbz') or MIRROR_HTTP.split('?')[0].endswith('.tar.xz') or MIRROR_HTTP.split('?')[0].endswith('.txz'))"
-  when: "MIRROR_HTTP != ''"
+      - name: set archive path
+        set_fact:
+          FULL_ARCHIVE_PATH: "/mnt/resource/{{ ARCHIVE_NAME }}"
+          LOCAL_ARCHIVE_UNZIP_PATH: "/mnt/resource/mirror_temp"
 
-- name: Mirror needing downloading from sas (only works 3.4 and above, otherwise will be done as part of install).
-  block:
-  - name: "Download and unpack the mirror manager files for sas from: {{ MIRROR_MANAGER_URL }}"
-    unarchive:
-      remote_src: yes
-      src: "{{ MIRROR_MANAGER_URL }}"
-      dest: "{{ ORCHESTRATION_DIRECTORY }}"
-      creates: "{{ ORCHESTRATION_MIRROR_MANAGER }}"
-    become: no
-    delegate_to: localhost
-    run_once: true
+      - name: download the archive
+        get_url:
+          url: "{{ MIRROR_HTTP }}"
+          dest: "{{ FULL_ARCHIVE_PATH }}"
+        async: 1800
 
-  - name: "Use mirror manager to download a copy of the mirror from sas"
-    shell: >-
-      time "{{ ORCHESTRATION_MIRROR_MANAGER }}" mirror --deployment-data "{{ LICENSE_FILE }}" --latest --platform x64-redhat-linux-6 --workers 4 -p "{{ LOCAL_DIRECTORY_MIRROR }}" -d
-    retries: 5
-    delay: 10
-    register: result
-    until: result.rc == 0
-    delegate_to: localhost
-    run_once: true
+      - name: create storage folder
+        file:
+          path: "{{ LOCAL_ARCHIVE_UNZIP_PATH }}"
+          state: directory
 
+      - name: "Unpack the mirror files from compressed archive"
+        unarchive:
+          remote_src: yes
+          src: "{{ FULL_ARCHIVE_PATH }}"
+          dest: "{{ LOCAL_ARCHIVE_UNZIP_PATH }}"
+          extra_opts:
+          - '--no-acls'
+          - '--no-same-owner'
+          - '--no-same-permissions'
+          - '--no-selinux'
+          - '--no-xattrs'
+          - '--touch'
 
-  when: "USE_MIRROR and MIRROR_HTTP == ''"
-    
+      - name: move the unziped files to cifs
+        shell: >-
+          mv -f {{ LOCAL_ARCHIVE_UNZIP_PATH }}/* "{{ LOCAL_DIRECTORY_MIRROR }}"
+
+      when: "MIRROR_HTTP.split('?')[0].endswith('.zip') or MIRROR_HTTP.split('?')[0].endswith('.tgz') or MIRROR_HTTP.split('?')[0].endswith('.tar.gz') or MIRROR_HTTP.split('?')[0].endswith('.tar.bz2') or MIRROR_HTTP.split('?')[0].endswith('.tbz') or MIRROR_HTTP.split('?')[0].endswith('.tar.xz') or MIRROR_HTTP.split('?')[0].endswith('.txz')"
+
+    - name: azure blob folder with sas key
+      block:
+      - name: set that we are using azure blob folder mirror
+        set_fact:
+          MIRROR_IS_AZURE_BLOB_FOLDER: "TRUE"
+
+      - name: install azcopy prerequisites
+        yum:
+          name: "{{ item }}"
+          state: "latest"
+        with_items:
+        - libunwind
+        - icu
+
+      - name: create install folder
+        file:
+          state: directory
+          path: /tmp/azcopy_install
+
+      - name: downloading azcopy from microsoft
+        become: yes
+        unarchive:
+          remote_src: yes
+          src: "https://aka.ms/downloadazcopylinux64"
+          dest: "/tmp/azcopy_install"
+
+      - name: install azcopy
+        become: yes
+        shell: >-
+          /tmp/azcopy_install/install.sh
+
+      - name: remove install directory
+        file:
+          state: absent
+          path: /tmp/azcopy_install
+
+      - name: use azsync to download mirror
+        become: yes
+        shell: >-
+          azcopy --source "{{ MIRROR_HTTP }}" --destination "{{ LOCAL_DIRECTORY_MIRROR }}" --recursive
+        async: 1800
+
+      when: "MIRROR_HTTP.split('?')[0].endswith('/') and 'blob.core.windows.net' in MIRROR_HTTP  and not MIRROR_IS_ZIP"
+
+    - fail:
+        msg: "Supplied Mirror must be an archive of file type zip, .tar.gz, .tar.bz2, or .tar.xz; or an azure blob storage folder with sas key"
+      when: "not (MIRROR_IS_ZIP or MIRROR_IS_AZURE_BLOB_FOLDER)"
+    when: "MIRROR_HTTP != ''"
+
+  - name: Mirror needing downloading from sas (only works 3.4 and above, otherwise will be done as part of install).
+    block:
+    - name: create orchestration directory on download box (services)
+      shell: >-
+        mkdir -p "{{ ORCHESTRATION_DIRECTORY }}"
+
+    - set_fact:
+        LICENSE_TEMP_LOCATION: "{{ ORCHESTRATION_DIRECTORY }}/license.zip"
+
+    - name: Copy license file to the orchestration download directory
+      copy:
+        src: "{{ LICENSE_FILE }}"
+        dest: "{{ LICENSE_TEMP_LOCATION }}"
+
+    - name: "Download and unpack the mirror manager files for sas from: {{ MIRROR_MANAGER_URL }}"
+      unarchive:
+        remote_src: yes
+        src: "{{ MIRROR_MANAGER_URL }}"
+        dest: "{{ ORCHESTRATION_DIRECTORY }}"
+        creates: "{{ ORCHESTRATION_MIRROR_MANAGER }}"
+
+    - name: "Use mirror manager to download a copy of the mirror from sas"
+      shell: |-
+        set -o pipefail
+        "{{ ORCHESTRATION_MIRROR_MANAGER }}" mirror --deployment-data "{{ LICENSE_TEMP_LOCATION }}" --latest --platform x64-redhat-linux-6 --workers 20 -p "{{ LOCAL_DIRECTORY_MIRROR }}" -d 2>&1 | tee -a /tmp/viya_mirror_download.log
+      retries: 5
+      delay: 10
+      register: result
+      until: result.rc == 0
+
+#    - debug:
+#        var: job_result
+#
+#    - name: "Failed to download prior, retrying: Use mirror manager to download a copy of the mirror from sas"
+#      shell: >-
+#        "{{ ORCHESTRATION_MIRROR_MANAGER }}" mirror --deployment-data "{{ LICENSE_TEMP_LOCATION }}" --latest --platform x64-redhat-linux-6 --workers 4 -p "{{ LOCAL_DIRECTORY_MIRROR }}" -d 2>&1 | tee -a /tmp/viya_mirror_download.log
+#      register: MIRROR_MANAGER_ASYNC
+#      async: 1800
+#      poll: 0
+#      when: "job_result.rc != 0"
+#
+#    - name: resync with the mirror manager job
+#      async_status:
+#        jid: "{{ MIRROR_MANAGER_ASYNC.ansible_job_id }}"
+#      register: job_result
+#      until: job_result.finished
+#      retries: 2000
+
+    when: "USE_MIRROR and MIRROR_HTTP == ''"
+  when: "inventory_hostname == groups['CasControllerServers'][0]"
+
+#- name: resync with the yum update job
+#  async_status:
+#    jid: "{{ YUM_ASYNC.ansible_job_id }}"
+#  register: job_result
+#  until: job_result.finished
+#  retries: 200
+
+#- name: "Unpack the mirror files from compressed archive"
+#  unarchive:
+#    remote_src: yes
+#    src: "{{ MIRROR_HTTP }}"
+#    dest: "{{ REMOTE_DIRECTORY_MIRROR }}"
+#    extra_opts:
+#    - '--no-acls'
+#    - '--no-same-owner'
+#    - '--no-same-permissions'
+#    - '--no-selinux'
+#    - '--no-xattrs'
+#    - '--touch'
+#    - '-v'
+#  when: "inventory_hostname == groups['CasControllerServers'][0] and MIRROR_IS_ZIP"
+
 - name: "Download and unpack the orchestration files for sas from: {{ ORCHESTRATION_URL }}"
   unarchive:
     remote_src: yes

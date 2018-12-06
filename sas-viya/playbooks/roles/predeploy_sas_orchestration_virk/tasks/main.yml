@@ -61,14 +61,14 @@
 
       - name: create storage folder
         file:
-          path: "{{ LOCAL_ARCHIVE_UNZIP_PATH }}"
+          path: "{{ LOCAL_DIRECTORY_MIRROR }}"
           state: directory
 
       - name: "Unpack the mirror files from compressed archive"
         unarchive:
           remote_src: yes
           src: "{{ FULL_ARCHIVE_PATH }}"
-          dest: "{{ LOCAL_ARCHIVE_UNZIP_PATH }}"
+          dest: "{{ LOCAL_DIRECTORY_MIRROR }}"
           extra_opts:
           - '--no-acls'
           - '--no-same-owner'
@@ -77,9 +77,9 @@
           - '--no-xattrs'
           - '--touch'
 
-      - name: move the unziped files to cifs
-        shell: >-
-          mv -f {{ LOCAL_ARCHIVE_UNZIP_PATH }}/* "{{ LOCAL_DIRECTORY_MIRROR }}"
+#      - name: move the unziped files to cifs
+#        shell: >-
+#          mv -f {{ LOCAL_ARCHIVE_UNZIP_PATH }}/* "{{ LOCAL_DIRECTORY_MIRROR }}"
 
       when: "MIRROR_HTTP.split('?')[0].endswith('.zip') or MIRROR_HTTP.split('?')[0].endswith('.tgz') or MIRROR_HTTP.split('?')[0].endswith('.tar.gz') or MIRROR_HTTP.split('?')[0].endswith('.tar.bz2') or MIRROR_HTTP.split('?')[0].endswith('.tbz') or MIRROR_HTTP.split('?')[0].endswith('.tar.xz') or MIRROR_HTTP.split('?')[0].endswith('.txz')"
 
@@ -119,6 +119,11 @@
           state: absent
           path: /tmp/azcopy_install
 
+      - name: create storage folder
+        file:
+          path: "{{ LOCAL_DIRECTORY_MIRROR }}"
+          state: directory
+
       - name: use azsync to download mirror
         become: yes
         shell: >-
@@ -153,6 +158,11 @@
         dest: "{{ ORCHESTRATION_DIRECTORY }}"
         creates: "{{ ORCHESTRATION_MIRROR_MANAGER }}"
 
+    - name: create storage folder
+      file:
+        path: "{{ LOCAL_DIRECTORY_MIRROR }}"
+        state: directory
+
     - name: "Use mirror manager to download a copy of the mirror from sas"
       shell: |-
         set -o pipefail
@@ -181,7 +191,83 @@
 #      retries: 2000
 
     when: "USE_MIRROR and MIRROR_HTTP == ''"
-  when: "inventory_hostname == groups['CasControllerServers'][0]"
+
+  - name: Install nfs and configure share
+    block:
+      - name: install nfs software
+        yum:
+          name: "{{ item }}"
+          state: "latest"
+        with_items:
+        - nfs-utils
+        - libnfsidmap
+
+      - name: add export to exports file
+        lineinfile:
+          path: /etc/exports
+          state: present
+          regexp: '^{{ LOCAL_DIRECTORY_MIRROR }}'
+          line: '{{ LOCAL_DIRECTORY_MIRROR }} *(ro)'
+          create: yes
+
+      - name: enable nfs services
+        systemd:
+          name: "{{ item }}"
+          state: started
+          enabled: True
+        with_items:
+        - rpcbind
+        - nfs-server
+        - rpc-statd
+        - nfs-idmapd
+
+      - firewalld:
+          service: "{{ item }}"
+          permanent: true
+          state: enabled
+          immediate: yes
+        with_items:
+          - nfs
+          - mountd
+          - rpc-bind
+
+
+    when: "USE_MIRROR"
+  when: "inventory_hostname == groups['sas-services'][0]"
+
+- name: "mounts the mirror on other systems that also need it, if we have a mirror"
+  block:
+    - name: install nfs software
+      yum:
+        name: "{{ item }}"
+        state: "latest"
+      with_items:
+      - nfs-utils
+      - rpcbind
+      - postfix
+
+    - name: enable nfs services
+      systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: True
+      with_items:
+      - postfix
+
+    - name: create the mount point for the mirror
+      file:
+        path: "{{ LOCAL_DIRECTORY_MIRROR }}"
+        state: directory
+
+    - name: mount the mirror
+      mount:
+        name: "{{ LOCAL_DIRECTORY_MIRROR }}"
+        src: "{{hostvars[groups['sas-services'][0]]['ansible_hostname']}}:{{ LOCAL_DIRECTORY_MIRROR }}"
+        fstype: nfs
+        opts: defaults
+        state: mounted
+
+  when: "inventory_hostname != groups['sas-services'][0] and USE_MIRROR"
 
 #- name: resync with the yum update job
 #  async_status:
@@ -217,7 +303,7 @@
     
 - name: Build Orchestration block for sas
   shell: >-
-    {{ ORCHESTRATION_DIRECTORY }}/sas-orchestration --verbose build --input {{ LICENSE_FILE }} --output "{{ ORCHESTRATION_DIRECTORY }}/SAS_Viya_playbook.tgz" {% if USE_MIRROR %} --repository-warehouse "file://{{ REMOTE_DIRECTORY_MIRROR }}" {% endif %}
+    {{ ORCHESTRATION_DIRECTORY }}/sas-orchestration --verbose build --input {{ LICENSE_FILE }} --output "{{ ORCHESTRATION_DIRECTORY }}/SAS_Viya_playbook.tgz" {% if USE_MIRROR %} --repository-warehouse "file://{{ LOCAL_DIRECTORY_MIRROR }}" {% endif %}
   args:
     chdir: "{{ ORCHESTRATION_DIRECTORY }}"
     creates: "{{ ORCHESTRATION_DIRECTORY }}/SAS_Viya_playbook.tgz"

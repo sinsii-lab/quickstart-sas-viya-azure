@@ -45,9 +45,18 @@
     - name: format new volume
       filesystem: fstype=xfs dev="{{ SOURCE_DISK_PARTITION }}"
       when: source_disk_stat.stat.exists == true
+
+    - name: get the UUID of the new partition
+      command: >-
+        blkid {{ SOURCE_DISK_PARTITION }} -s UUID -o value
+      register: volume_uuid
     
     - name: mount {{ MOUNT_POINT }}
-      mount: name={{ MOUNT_POINT }} fstype=xfs state=mounted src="{{ SOURCE_DISK_PARTITION }}"
+      mount:
+        name: "{{ MOUNT_POINT }}"
+        fstype: xfs
+        state: mounted
+        src: "UUID={{ volume_uuid.stdout }}"
       when: source_disk_stat.stat.exists == true
 
     - name: return old opt files to the new mount

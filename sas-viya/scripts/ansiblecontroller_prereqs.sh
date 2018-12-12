@@ -14,7 +14,7 @@ set -v
 #DIRECTORY_GIT_LOCAL_COPY="${DIRECTORY_NFS_SHARE}/setup/code"
 #DIRECTORY_LICENSE_FILE="${DIRECTORY_NFS_SHARE}/setup/license"
 #DIRECTORY_SSL_FILES="${DIRECTORY_NFS_SHARE}/setup/ssl"
-
+. "/sas/install/env.ini"
 FILE_LICENSE_FILE="${DIRECTORY_LICENSE_FILE}/license_file.zip"
 
 if [ -z "$PRIMARY_USER" ]; then
@@ -40,7 +40,7 @@ echo "$(date)"
 echo "Creating the share on the storage account."
 rpm --import https://packages.microsoft.com/keys/microsoft.asc
 sh -c 'echo -e "[azure-cli]\nname=Azure CLI\nbaseurl=https://packages.microsoft.com/yumrepos/azure-cli\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/azure-cli.repo'
-yum install -y azure-cli
+yum install -y azure-cli --nogpgcheck
 az storage share create --name ${azure_storage_files_share} --connection-string "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=${azure_storage_account};AccountKey=${azure_storage_files_password}"
 
 echo "setup cifs"
@@ -58,7 +58,7 @@ fi
 chmod 600 "/etc/smbcredentials/${azure_storage_account}.cred"
 
 mkdir -p "${DIRECTORY_NFS_SHARE}"
-echo "//${cifs_server_fqdn}/${azure_storage_files_share} ${DIRECTORY_NFS_SHARE}  cifs vers=3.0,credentials=/etc/smbcredentials/${azure_storage_account}.cred,dir_mode=0777,file_mode=0777,sec=ntlmssp 0 0" >> /etc/fstab
+echo "//${cifs_server_fqdn}/${azure_storage_files_share} ${DIRECTORY_NFS_SHARE}  cifs defaults,vers=3.0,credentials=/etc/smbcredentials/${azure_storage_account}.cred,dir_mode=0777,file_mode=0777,sec=ntlmssp 0 0" >> /etc/fstab
 #mount -a
 
 mount "${DIRECTORY_NFS_SHARE}"

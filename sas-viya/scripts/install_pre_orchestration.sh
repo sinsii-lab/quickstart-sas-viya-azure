@@ -8,7 +8,7 @@ fi
 set -x
 set -v
 ScriptDirectory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
+. "/sas/install/env.ini"
 FORKS=5
 
 INVENTORY_FILE="inventory.ini"

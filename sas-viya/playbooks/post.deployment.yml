@@ -33,7 +33,12 @@
 #      chown sas:sas /backups
 #    tags:
 #      - backups
-
+- hosts: sas-servers
+  become: yes
+  become_user: root
+  tasks:
+  - import_role:
+      name: deploy_saswork_restart_service
 
 - hosts: CasControllerServers
   become: yes

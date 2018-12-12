@@ -23,7 +23,7 @@
         name: mount_opt_disk
       vars:
         SOURCE_DISK: ""
-        SOURCE_DISK_SIZE: "50.00 GB"
+        SOURCE_DISK_SIZE: "256.00 GB"
     - name: create viya installation subdir
       file:
         path: /opt/sas
@@ -50,7 +50,7 @@
         state: directory
         mode: 0777
 
-- hosts: sas-services
+- hosts: sas-servers
   become: yes
   become_user: root
   vars:
@@ -88,7 +88,7 @@
 
         [ alt_names ]
         DNS.1 = localhost
-        {% for host in groups['sas-services'] %}
+        {% for host in groups['sas-servers'] %}
         DNS.{{ loop.index0 * 4 + 2 }} = {{ hostvars[host].inventory_hostname }}
         DNS.{{ loop.index0 * 4 + 3 }} = {{ hostvars[host].ansible_host }}
         DNS.{{ loop.index0 * 4 + 4 }} = *.{{ hostvars[host].ansible_host }}
@@ -97,7 +97,7 @@
 
         IP.1 = 127.0.0.1
         IP.2 = 0:0:0:0:0:0:0:1
-        {% for host in groups['sas-services'] %}
+        {% for host in groups['sas-servers'] %}
         IP.{{ loop.index0 + 3 }} = {{ hostvars[host].ansible_default_ipv4.address }}
         {% endfor %}
         EOF

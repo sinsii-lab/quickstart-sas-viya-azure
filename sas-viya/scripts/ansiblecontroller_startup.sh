@@ -8,23 +8,18 @@ fi
 #set -x
 #set -v
 ScriptDirectory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+environmentLocation="/sas/install/env.ini"
+
 echo "$@" >> /tmp/commands.log
+mkdir -p "/sas/install"
+cat << EOF > "$environmentLocation"
 export SCRIPT_PHASE="$1"
-if [ -z "$SCRIPT_PHASE" ]; then
-	export SCRIPT_PHASE="1"
-fi
 export https_location="$2"
 export https_sas_key="$3"
 export license_file_uri="$4"
 export PRIMARY_USER="$5"
 export ADMINPASS="$6"
-if [ -z "$ADMINPASS" ]; then
-	export ADMINPASS="adminPass"
-fi
 export USERPASS="$7"
-
-
-
 export PRIVATE_SUBNET_IPRANGE="$8"
 export PUBLIC_DNS_NAME="$9"
 export MIRROR_HTTP="${10}"
@@ -32,29 +27,26 @@ export azure_storage_account="${11}"
 export azure_storage_files_share="${12}"
 export azure_storage_files_password="${13}"
 
-export DIRECTORY_NFS_SHARE="/mnt/${azure_storage_files_share}"
-export REMOTE_DIRECTORY_NFS_MOUNT="/mnt/${azure_storage_files_share}"
+export DIRECTORY_NFS_SHARE="/mnt/\${azure_storage_files_share}"
+export REMOTE_DIRECTORY_NFS_MOUNT="/mnt/\${azure_storage_files_share}"
 export SAS_INSTALL_SRC_DIRECTORY="/sas/install"
-
-export DIRECTORY_ANSIBLE_KEYS="${DIRECTORY_NFS_SHARE}/setup/ansible_key"
-export DIRECTORY_READYNESS_FLAGS="${DIRECTORY_NFS_SHARE}/setup/readiness_flags"
-export DIRECTORY_MIRROR="/mnt/resource/mirror"
-export REMOTE_DIRECTORY_MIRROR="${REMOTE_DIRECTORY_NFS_MOUNT}/mirror"
-export DIRECTORY_LICENSE_FILE="${SAS_INSTALL_SRC_DIRECTORY}/license"
-export DIRECTORY_SSL_JSON_FILE="${SAS_INSTALL_SRC_DIRECTORY}/setup/ssl"
-export DIRECTORY_ANSIBLE_INVENTORIES="${DIRECTORY_NFS_SHARE}/setup/ansible/inventory"
-export DIRECTORY_ANSIBLE_GROUPS="${DIRECTORY_NFS_SHARE}/setup/ansible/groups"
-export FILE_LICENSE_FILE="${DIRECTORY_LICENSE_FILE}/license_file.zip"
-export CAS_SIZING_FILE="${DIRECTORY_LICENSE_FILE}/cas_size.txt"
-export FILE_SSL_JSON_FILE="${DIRECTORY_SSL_JSON_FILE}/loadbalancer.pfx.json"
-export FILE_CA_B64_FILE="${DIRECTORY_SSL_JSON_FILE}/sas_certificate_all.crt.b64.txt"
-
-
-
-export ORCHESTRATION_DIRECTORY="${SAS_INSTALL_SRC_DIRECTORY}/setup/orchestration"
-export VIRK_CLONE_DIRECTORY="${ORCHESTRATION_DIRECTORY}/sas_viya_playbook/virk"
-export CODE_DIRECTORY="${SAS_INSTALL_SRC_DIRECTORY}/code"
-
+export DIRECTORY_ANSIBLE_KEYS="\${DIRECTORY_NFS_SHARE}/setup/ansible_key"
+export DIRECTORY_READYNESS_FLAGS="\${DIRECTORY_NFS_SHARE}/setup/readiness_flags"
+export DIRECTORY_MIRROR="\${DIRECTORY_NFS_SHARE}/mirror"
+export REMOTE_DIRECTORY_MIRROR="\${REMOTE_DIRECTORY_NFS_MOUNT}/mirror"
+export DIRECTORY_LICENSE_FILE="\${SAS_INSTALL_SRC_DIRECTORY}/license"
+export DIRECTORY_SSL_JSON_FILE="\${SAS_INSTALL_SRC_DIRECTORY}/setup/ssl"
+export DIRECTORY_ANSIBLE_INVENTORIES="\${DIRECTORY_NFS_SHARE}/setup/ansible/inventory"
+export DIRECTORY_ANSIBLE_GROUPS="\${DIRECTORY_NFS_SHARE}/setup/ansible/groups"
+export FILE_LICENSE_FILE="\${DIRECTORY_LICENSE_FILE}/license_file.zip"
+export CAS_SIZING_FILE="\${DIRECTORY_LICENSE_FILE}/cas_size.txt"
+export FILE_SSL_JSON_FILE="\${DIRECTORY_SSL_JSON_FILE}/loadbalancer.pfx.json"
+export FILE_CA_B64_FILE="\${DIRECTORY_SSL_JSON_FILE}/sas_certificate_all.crt.b64.txt"
+export ORCHESTRATION_DIRECTORY="\${SAS_INSTALL_SRC_DIRECTORY}/setup/orchestration"
+export VIRK_CLONE_DIRECTORY="\${ORCHESTRATION_DIRECTORY}/sas_viya_playbook/virk"
+export CODE_DIRECTORY="\${SAS_INSTALL_SRC_DIRECTORY}/code"
+EOF
+. "$environmentLocation"
 #./bastion_bootstrap.sh --enable false
 if [ "$SCRIPT_PHASE" -eq "1" ]; then
 	echo "running ansible prerequisites install"

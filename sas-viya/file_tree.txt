@@ -66,6 +66,10 @@
 /playbooks/roles/_setup_sas_orchestration_inventory_config/3.4/tests/inventory|664
 /playbooks/roles/_setup_sas_orchestration_inventory_config/3.4/tests/test.yml|664
 /playbooks/roles/_setup_sas_orchestration_inventory_config/3.4/vars/main.yml|664
+/playbooks/roles/deploy_saswork_restart_service/defaults/main.yml|666
+/playbooks/roles/deploy_saswork_restart_service/files/setupSasWorkOnStartup.service|664
+/playbooks/roles/deploy_saswork_restart_service/files/setupSasWorkOnStartup.sh|775
+/playbooks/roles/deploy_saswork_restart_service/tasks/main.yml|666
 /playbooks/roles/mount_export_disk/README.md|664
 /playbooks/roles/mount_export_disk/defaults/main.yml|664
 /playbooks/roles/mount_export_disk/handlers/main.yml|664

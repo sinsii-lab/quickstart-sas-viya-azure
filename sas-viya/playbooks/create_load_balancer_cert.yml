@@ -25,11 +25,43 @@
     - name: create certificate and convert the pem versions over to a PFX file
       shell:
         cmd: |-
+          cat > "{{ SSL_WORKING_FOLDER }}/lb_cert_config_file.cfg"<<-EOF
+          dir					= .
+
+          [req]
+          default_bits = 4096
+          prompt = no
+          default_md = sha512
+          req_extensions = req_ext
+          distinguished_name = dn
+
+          [ dn ]
+          C=US
+          O=Self-Signed Viya Certificate
+          OU=SASViya
+          CN = {{ SSL_SHORT_HOSTNAME }}
+
+          [ req_ext ]
+          subjectAltName = @alt_names
+
+          [ alt_names ]
+          DNS.1 = {{ SSL_SHORT_HOSTNAME }}
+          DNS.2 = {{ SSL_HOSTNAME }}
+
+          EOF
+          cat > "{{ SSL_WORKING_FOLDER }}/mintLBCert.sh"<<-EOF
+          openssl req -x509 -newkey rsa:4096 -keyout "{{ SSL_KEY_FILE }}" -out "{{ SSL_CERT_FILE }}" -days 3650 -nodes -config "{{ SSL_WORKING_FOLDER }}/lb_cert_config_file.cfg" -extensions req_ext -passout "file:{{ SSL_PASSWORD_FILE }}"
+          EOF
           echo "{{ SSL_KEY_PASSWORD }}" > "{{ SSL_PASSWORD_FILE }}"
           ln -s "{{ SSL_PASSWORD_FILE }}" "{{ SSL_PASSWORD_FILE }}.2.txt"
-          # Createing the ssl cert key pair
-          openssl req -x509 -newkey rsa:4096 -keyout "{{ SSL_KEY_FILE }}" -out "{{ SSL_CERT_FILE }}" -days 3650 -subj "/CN={{ SSL_SHORT_HOSTNAME }}/subjectAltName={{ SSL_HOSTNAME }}" -sha256 -passout "file:{{ SSL_PASSWORD_FILE }}"
-          # converting the ssl certificate key pair to a micrsoft acceptable document
+          chmod +x "{{ SSL_WORKING_FOLDER }}/mintLBCert.sh"
+          bash "{{ SSL_WORKING_FOLDER }}/mintLBCert.sh"
+
+          #echo "{{ SSL_KEY_PASSWORD }}" > "{{ SSL_PASSWORD_FILE }}"
+          #ln -s "{{ SSL_PASSWORD_FILE }}" "{{ SSL_PASSWORD_FILE }}.2.txt"
+          ## Createing the ssl cert key pair
+          #openssl req -x509 -newkey rsa:4096 -keyout "{{ SSL_KEY_FILE }}" -out "{{ SSL_CERT_FILE }}" -days 3650 -subj "/CN={{ SSL_SHORT_HOSTNAME }}/subjectAltName={{ SSL_HOSTNAME }}" -sha256 -passout "file:{{ SSL_PASSWORD_FILE }}"
+          ## converting the ssl certificate key pair to a micrsoft acceptable document
           openssl pkcs12 -export -in "{{ SSL_CERT_FILE }}" -inkey "{{ SSL_KEY_FILE }}" -out "{{ SSL_PFX_FILE }}" -passin "file:{{ SSL_PASSWORD_FILE }}" -passout "file:{{ SSL_PASSWORD_FILE }}.2.txt"
           # Converting the doc to base64 for web consumption
           cat "{{ SSL_PFX_FILE }}" | base64 -w 0 > "{{ SSL_PFX_BASE64 }}"

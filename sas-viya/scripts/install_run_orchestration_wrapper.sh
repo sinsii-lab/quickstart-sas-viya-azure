@@ -16,7 +16,7 @@ INVENTORY_FILE="inventory.ini"
 PID_FILE="/tmp/install_run_orchestration.pid"
 RETURN_FILE="/tmp/install_run_orchestration.out"
 FILE_OF_RECORD="/tmp/install_run_orchestration.log"
-
+. "/sas/install/env.ini"
 
 if [ ! -e "$PID_FILE" ]; then
     if [ ! -e "$RETURN_FILE" ]; then

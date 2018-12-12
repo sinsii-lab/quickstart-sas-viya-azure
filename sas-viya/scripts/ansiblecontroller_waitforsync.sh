@@ -2,7 +2,7 @@
 # set -x
 # set -v
 # make sure we have at least java8 and ansible 2.3.2.0
-
+. "/sas/install/env.ini"
 DIRECTORY_NFS_SHARE="/exports/bastion"
 DIRECTORY_READYNESS_FLAGS="${DIRECTORY_NFS_SHARE}/setup/readiness_flags"
 

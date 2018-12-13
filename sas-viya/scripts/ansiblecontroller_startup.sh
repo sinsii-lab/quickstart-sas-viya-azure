@@ -32,8 +32,8 @@ export REMOTE_DIRECTORY_NFS_MOUNT="/mnt/\${azure_storage_files_share}"
 export SAS_INSTALL_SRC_DIRECTORY="/sas/install"
 export DIRECTORY_ANSIBLE_KEYS="\${DIRECTORY_NFS_SHARE}/setup/ansible_key"
 export DIRECTORY_READYNESS_FLAGS="\${DIRECTORY_NFS_SHARE}/setup/readiness_flags"
-export DIRECTORY_MIRROR="\${DIRECTORY_NFS_SHARE}/mirror"
-export REMOTE_DIRECTORY_MIRROR="\${REMOTE_DIRECTORY_NFS_MOUNT}/mirror"
+export DIRECTORY_MIRROR="/mnt/resource/mirror"
+export REMOTE_DIRECTORY_MIRROR="\${DIRECTORY_MIRROR}"
 export DIRECTORY_LICENSE_FILE="\${SAS_INSTALL_SRC_DIRECTORY}/license"
 export DIRECTORY_SSL_JSON_FILE="\${SAS_INSTALL_SRC_DIRECTORY}/setup/ssl"
 export DIRECTORY_ANSIBLE_INVENTORIES="\${DIRECTORY_NFS_SHARE}/setup/ansible/inventory"
@@ -45,6 +45,7 @@ export FILE_CA_B64_FILE="\${DIRECTORY_SSL_JSON_FILE}/sas_certificate_all.crt.b64
 export ORCHESTRATION_DIRECTORY="\${SAS_INSTALL_SRC_DIRECTORY}/setup/orchestration"
 export VIRK_CLONE_DIRECTORY="\${ORCHESTRATION_DIRECTORY}/sas_viya_playbook/virk"
 export CODE_DIRECTORY="\${SAS_INSTALL_SRC_DIRECTORY}/code"
+export ANSIBLE_SSH_RETRIES=10
 EOF
 . "$environmentLocation"
 #./bastion_bootstrap.sh --enable false

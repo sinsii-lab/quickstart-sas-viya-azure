@@ -72,15 +72,15 @@ elif [ "$SCRIPT_PHASE" -eq "5" ]; then
 elif [ "$SCRIPT_PHASE" -eq "6" ]; then
     cat "$FILE_CA_B64_FILE"|tr -d '\n'
 elif [ "$SCRIPT_PHASE" -eq "7" ]; then
-	echo "Starting Actual Install"
+	echo "Starting/Continuing Actual Install"
 	su $PRIMARY_USER -c "${CODE_DIRECTORY}/scripts/install_run_orchestration_wrapper.sh"
 	ret="$?"
     if [ "$ret" -ne "0" ]; then
         exit $ret
     fi
 elif [ "$SCRIPT_PHASE" -eq "8" ]; then
-	echo "Starting Actual Install"
-	su $PRIMARY_USER -c "${CODE_DIRECTORY}/scripts/install_post_orchestration.sh"
+	echo "Finishing Actual Install"
+	su $PRIMARY_USER -c "${CODE_DIRECTORY}/scripts/install_run_orchestration_wrapper.sh"
 	ret="$?"
     if [ "$ret" -ne "0" ]; then
         exit $ret

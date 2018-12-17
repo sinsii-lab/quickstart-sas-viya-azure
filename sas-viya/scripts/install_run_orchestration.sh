@@ -80,6 +80,13 @@ if [ "$ret" -ne "0" ]; then
 fi
 finished_time="$(date -u +%s)"
 
+cd $ScriptDirectory/../playbooks
+time ansible-playbook -f $FORKS -i $INVENTORY_FILE -v post.deployment.yml -e "cas_virtual_host=$PUBLIC_DNS_NAME"
+ret="$?"
+if [ "$ret" -ne "0" ]; then
+    exit $ret
+fi
+finished_post_orchestration_time="$(date -u +%s)"
 
 elapsed="$(($openldap_installed_time-$start_time))"
 printf 'Time to install openldap: %02dh:%02dm:%02ds\n' $(($elapsed/3600)) $(($elapsed%3600/60)) $(($elapsed%60))
@@ -89,5 +96,7 @@ elapsed="$(($ran_virk_time-$download_mirrors_and_orchestration_time))"
 printf 'Time to run virk playbook: %02dh:%02dm:%02ds\n' $(($elapsed/3600)) $(($elapsed%3600/60)) $(($elapsed%60))
 elapsed="$(($finished_time-$ran_virk_time))"
 printf 'Time to run sas installer: %02dh:%02dm:%02ds\n' $(($elapsed/3600)) $(($elapsed%3600/60)) $(($elapsed%60))
-elapsed="$(($finished_time-$start_time))"
+elapsed="$(($finished_post_orchestration_time-$finished_time))"
+printf 'Time to run post configuration: %02dh:%02dm:%02ds\n' $(($elapsed/3600)) $(($elapsed%3600/60)) $(($elapsed%60))
+elapsed="$(($finished_post_orchestration_time-$start_time))"
 printf 'Total time: %02dh:%02dm:%02ds\n' $(($elapsed/3600)) $(($elapsed%3600/60)) $(($elapsed%60))

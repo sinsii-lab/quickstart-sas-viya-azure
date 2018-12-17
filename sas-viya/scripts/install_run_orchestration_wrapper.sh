@@ -40,8 +40,8 @@ fi
 
 #tail -100f "$FILE_OF_RECORD" &
 #tail_command_pid=$!
-# one hour
-TIME_TO_LIVE_IN_SECNDS=$((60*60))
+# one hour and 15 min
+TIME_TO_LIVE_IN_SECNDS=$((60*75))
 CURRENT_TIME_ALIVE_IN_SECONDS=0
 # wait for an hour or until the child process finishes.
 while [ "$TIME_TO_LIVE_IN_SECNDS" -gt "$CURRENT_TIME_ALIVE_IN_SECONDS" ] && kill -s 0 $PID; do
@@ -56,10 +56,19 @@ if [ -e "$RETURN_FILE" ]; then
     exit $(cat $RETURN_FILE)
 else
     if kill -s 0 $PID; then
-        # if the process is still running and we just ran out of time, return 0
-        exit 0
+        # if the script phase is 8, or finishinshing, then the system still running is a problem and return a 1
+        if [ "$SCRIPT_PHASE" -eq "8" ]; then
+            echo ""
+            echo "Script did not finish by the end of the time allotted. The install may still finish successfully, but to be sure you will need to check ansible:/tmp/install_run_orchestration.log"
+            exit 1
+        else
+            # if the process is still running and we just ran out of time, return 0
+            exit 0
+        fi
     else
-        # if the process is not running and we don't have a return file, then something went wrong and invenstigation should happen
+        # if the process is not running and we don't have a return file, then something went wrong and investigation should happen
+        echo ""
+        echo "Install finished with errors. For more details, please check ansible:/tmp/install_run_orchestration.log"
         exit 1
     fi
 fi

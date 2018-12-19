@@ -91,11 +91,19 @@
     run_once: true
     delegate_to: localhost
 
+  - name: set JAVA_HOME
+    replace:
+      dest: "{{ ORCHESTRATION_VARS }}"
+      regexp:  '#4: JAVA_HOME=.*'
+      replace: '4: JAVA_HOME=/usr/lib/jvm/jre'
+    run_once: true
+    delegate_to: localhost
+
   - name: set LD_LIBRARY_PATH
     replace:
       dest: "{{ ORCHESTRATION_VARS }}"
       regexp:  '#5: LD_LIBRARY_PATH=.*'
-      replace: '5: LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ODBCHOME/lib'
+      replace: '5: LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ODBCHOME/lib:$JAVA_HOME/lib/amd64/server'
     run_once: true
     delegate_to: localhost
 

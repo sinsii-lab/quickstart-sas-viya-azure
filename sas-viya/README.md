@@ -79,14 +79,12 @@ If you are using SAS/ACCESS to ODBC, unvalidated SSL certificates are not suppor
 * CAS controller: ```/opt/sas/viya/home/lib64/accessclients/odbc.ini```
 * SAS Viya services: ```/opt/sas/spre/home/lib64/accessclients/odbc.ini```
 
-2. Modify the parameters per the following examples.  FOr details about how to configure:
+2. For each file, modify the parameters per the following examples.  For details about how to configure:
 * For detailed information about configuring data access, see 
  ["Configure Data Access"]({https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.4&locale=en) in the SAS Viya Deployment Guide.
 * For specific DataDirect information, see ["Configuration Through the System Information (odbc.ini) File"](https://documentation.progress.com/output/DataDirect/odbcsqlserverhelp/index.html#page/odbcsqlserver%2Fconfiguration-through-the-system-information-(od.html%23)).
 
-3. For SQLServer:
-
-Specify the appropriate driver location:
+3. For SQLServer, specify the appropriate driver location:
 * For SAS Viya, /opt/sas/spre/home/lib64/accessclients/lib/S0sqls27.so 
 * For CAS controller, /opt/sas/viya/home/lib64/accessclients/lib/S0sqls27.so 
  
@@ -113,7 +111,9 @@ Database=sqlserver
 EnableBulkLoad=0 
 EnableQuotedIdentifiers=0
 ```
-4.To set the encryption method, set EncryptionMethod to 0 for no SSL or 1 for SSL. 
+
+4. To set the encryption method, set EncryptionMethod to 0 for no SSL or 1 for SSL. 
+
 ```
 EncryptionMethod=1 
 FailoverGranularity=0 
@@ -142,14 +142,17 @@ SnapshotSerializable=0
 TrustStore= 
 TrustStorePassword=
 ```
+
 5. if you want SSL but require a certificate, set ValidateServerCertificate to 1. 
-  ``` 
+
+``` 
 ValidateServerCertificate=0 
 WorkStationID= 
 XMLDescribeType=-10 
 SSLLibName=/usr/lib64/libssl.so.1.0.2k 
 CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
 ```
+
 6. Save the odbc.ini files. 
 
 
@@ -216,9 +219,11 @@ ldapsearch -x -h localhost -b "dc=sasviya,dc=com"
 
 ### To add a user: 
 1.	 Create a user file that contains all the user info. 
+
 **Note:**    You must increment the UID from the last one displayed by the ldapsearch command.
 
-```newuser, sasviya.com
+```
+newuser, sasviya.com
 dn: uid=newuser,ou=users,dc=sasviya,dc=com=
 cn: newuser
 givenName: New
@@ -253,7 +258,8 @@ member: uid=newuser,ou=users,dc=sasviya,dc=com
 ldapadd -x -h localhost -D "cn=admin,dc=sasviya,dc=com" -W -f /path/to/user/file
 ```
 4.	Add the home directories for your new user on the programming machine (prog.viya.sas) and the CAS controller (controller.viya.sas). From the Ansible controller VM:
-```ssh prog.viya.sas
+```
+ssh prog.viya.sas
 sudo mkdir -p /home/newuser
 sudo chown newuser:sasusers /home/newuser
 exit
@@ -273,3 +279,6 @@ ldappasswd –h localhost –s USERPASSWORD –W –D cn=admin,dc=sasviya,dc=com
 ```
 ldapdelete –h localhost -W -D "cn=admin,dc=sasviya,dc=com" "uid=newuser,ou=users,dc=sasviya,dc=com"
 ```
+
+
+

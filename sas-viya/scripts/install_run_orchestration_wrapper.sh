@@ -40,8 +40,8 @@ fi
 
 #tail -100f "$FILE_OF_RECORD" &
 #tail_command_pid=$!
-# one hour and 15 min
-TIME_TO_LIVE_IN_SECNDS=$((60*75))
+# one hour and 0 min
+TIME_TO_LIVE_IN_SECNDS=$((60*60))
 CURRENT_TIME_ALIVE_IN_SECONDS=0
 # wait for an hour or until the child process finishes.
 while [ "$TIME_TO_LIVE_IN_SECNDS" -gt "$CURRENT_TIME_ALIVE_IN_SECONDS" ] && kill -s 0 $PID; do

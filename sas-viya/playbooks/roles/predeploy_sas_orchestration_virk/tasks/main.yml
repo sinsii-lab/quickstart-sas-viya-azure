@@ -57,7 +57,7 @@
         get_url:
           url: "{{ MIRROR_HTTP }}"
           dest: "{{ FULL_ARCHIVE_PATH }}"
-        async: 1800
+        async: 5400
 
       - name: create storage folder
         file:
@@ -128,7 +128,52 @@
         become: yes
         shell: >-
           azcopy --source "{{ MIRROR_HTTP }}" --destination "{{ LOCAL_DIRECTORY_MIRROR }}" --recursive
-        async: 1800
+        async: 5400
+        failed_when: false
+        register: copy_ret1
+
+      - name: use azsync to download mirror retry 1
+        become: yes
+        shell: |-
+          azcopy --source "{{ MIRROR_HTTP }}" --destination "{{ LOCAL_DIRECTORY_MIRROR }}" --recursive<<END
+          yes
+          END
+        async: 5400
+        failed_when: false
+        register: copy_ret2
+        when: "copy_ret1.rc != 0"
+
+      - name: use azsync to download mirror retry 2
+        become: yes
+        shell: |-
+          azcopy --source "{{ MIRROR_HTTP }}" --destination "{{ LOCAL_DIRECTORY_MIRROR }}" --recursive<<END
+          yes
+          END
+        async: 5400
+        failed_when: false
+        register: copy_ret3
+        when: "copy_ret1.rc != 0 and copy_ret2.rc != 0"
+
+      - name: use azsync to download mirror retry 3
+        become: yes
+        shell: |-
+          azcopy --source "{{ MIRROR_HTTP }}" --destination "{{ LOCAL_DIRECTORY_MIRROR }}" --recursive<<END
+          yes
+          END
+        async: 5400
+        failed_when: false
+        register: copy_ret4
+        when: "copy_ret1.rc != 0 and copy_ret2.rc != 0 and copy_ret3.rc != 0"
+
+      - name: use azsync to download mirror retry 4
+        become: yes
+        shell: |-
+          azcopy --source "{{ MIRROR_HTTP }}" --destination "{{ LOCAL_DIRECTORY_MIRROR }}" --recursive<<END
+          yes
+          END
+        async: 5400
+        register: copy_ret5
+        when: "copy_ret1.rc != 0 and copy_ret2.rc != 0 and copy_ret3.rc != 0 and copy_ret4.rc != 0"
 
       when: "MIRROR_HTTP.split('?')[0].endswith('/') and 'blob.core.windows.net' in MIRROR_HTTP  and not MIRROR_IS_ZIP"
 
@@ -157,6 +202,10 @@
         src: "{{ MIRROR_MANAGER_URL }}"
         dest: "{{ ORCHESTRATION_DIRECTORY }}"
         creates: "{{ ORCHESTRATION_MIRROR_MANAGER }}"
+      register: task_result
+      until: "task_result.extract_results.rc == 0"
+      retries: 10
+      delay: 5
 
     - name: create storage folder
       file:
@@ -300,6 +349,12 @@
   become: no
   delegate_to: localhost
   run_once: true
+  register: task_result
+  until: "task_result.extract_results.rc == 0"
+  retries: 10
+  delay: 5
+
+
     
 - name: Build Orchestration block for sas
   shell: >-

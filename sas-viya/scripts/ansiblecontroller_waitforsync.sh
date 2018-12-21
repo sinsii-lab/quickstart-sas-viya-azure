@@ -8,7 +8,7 @@ DIRECTORY_READYNESS_FLAGS="${DIRECTORY_NFS_SHARE}/setup/readiness_flags"
 
 
 wait_count=0
-stop_waiting_count=600
+stop_waiting_count=2000
 
 while [ ! -e "${DIRECTORY_READYNESS_FLAGS}/controller_ready" ]; do
 	echo "CASController not ready, waiting 1 second"

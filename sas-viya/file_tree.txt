@@ -66,10 +66,10 @@
 /playbooks/roles/_setup_sas_orchestration_inventory_config/3.4/tests/inventory|664
 /playbooks/roles/_setup_sas_orchestration_inventory_config/3.4/tests/test.yml|664
 /playbooks/roles/_setup_sas_orchestration_inventory_config/3.4/vars/main.yml|664
-/playbooks/roles/deploy_saswork_restart_service/defaults/main.yml|666
+/playbooks/roles/deploy_saswork_restart_service/defaults/main.yml|664
 /playbooks/roles/deploy_saswork_restart_service/files/setupSasWorkOnStartup.service|664
 /playbooks/roles/deploy_saswork_restart_service/files/setupSasWorkOnStartup.sh|775
-/playbooks/roles/deploy_saswork_restart_service/tasks/main.yml|666
+/playbooks/roles/deploy_saswork_restart_service/tasks/main.yml|664
 /playbooks/roles/mount_export_disk/README.md|664
 /playbooks/roles/mount_export_disk/defaults/main.yml|664
 /playbooks/roles/mount_export_disk/handlers/main.yml|664
@@ -87,7 +87,7 @@
 /playbooks/roles/mount_opt_disk/tests/test.yml|664
 /playbooks/roles/mount_opt_disk/vars/main.yml|664
 /playbooks/roles/predeploy_sas_orchestration_virk/README.md|664
-/playbooks/roles/predeploy_sas_orchestration_virk/defaults/main.yml|664
+/playbooks/roles/predeploy_sas_orchestration_virk/defaults/main.yml|666
 /playbooks/roles/predeploy_sas_orchestration_virk/handlers/main.yml|664
 /playbooks/roles/predeploy_sas_orchestration_virk/meta/main.yml|664
 /playbooks/roles/predeploy_sas_orchestration_virk/tasks/main.yml|664
@@ -105,6 +105,8 @@
 /playbooks/roles/read_sas_license_information/vars/main.yml|664
 /playbooks/update.config.yml|775
 /playbooks/update.inventory.yml|775
+/postconfig-helpers/dataagent2dataprep.yml|664
+/postconfig-helpers/dataprep2dataagent.yml|664
 /scripts/addldapuser.sh|775
 /scripts/ansiblecontroller_prereqs.sh|775
 /scripts/ansiblecontroller_startup.sh|775

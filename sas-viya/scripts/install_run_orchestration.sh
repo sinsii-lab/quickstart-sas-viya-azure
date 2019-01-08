@@ -55,10 +55,10 @@ if [ "$ret" -ne "0" ]; then
 fi
 download_mirrors_and_orchestration_time="$(date -u +%s)"
 
-if [ -n "$USERPASS" ]; then
-    rm -f "${ORCHESTRATION_DIRECTORY}/sas_viya_playbook/roles/consul/files/sitedefault.yml"
-	cp "${CODE_DIRECTORY}/openldap/sitedefault.yml" "${ORCHESTRATION_DIRECTORY}/sas_viya_playbook/roles/consul/files/"
-fi
+#if [ -n "$USERPASS" ]; then
+#    rm -f "${ORCHESTRATION_DIRECTORY}/sas_viya_playbook/roles/consul/files/sitedefault.yml"
+#	cp "${CODE_DIRECTORY}/openldap/sitedefault.yml" "${ORCHESTRATION_DIRECTORY}/sas_viya_playbook/roles/consul/files/"
+#fi
 
 time ansible-playbook -v -f $FORKS "${VIRK_CLONE_DIRECTORY}/playbooks/pre-install-playbook/viya_pre_install_playbook.yml" -i "$ORCHESTRATION_DIRECTORY/sas_viya_playbook/inventory.ini" --skip-tags skipmemfail,skipcoresfail,skipstoragefail,skipnicssfail,bandwidth -e 'use_pause=false'
 ret="$?"

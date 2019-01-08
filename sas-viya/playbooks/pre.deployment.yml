@@ -36,7 +36,17 @@
         path: /mnt/resource/sastmp/saswork
         state: directory
         mode: 0777
-      
+    - name: Ensuring that postfix is installed
+      yum:
+        name: "{{ item }}"
+        state: "latest"
+      with_items:
+      - postfix
+    - name: startup postfix and keep it started
+      systemd:
+        enabled: yes
+        name: postfix.service
+        state: started
 - hosts: CasControllerServers
   become: true
   tasks:

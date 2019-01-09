@@ -48,13 +48,15 @@
   - name: set redshift access forwork spaceserver
     blockinfile:
       dest: "{{ ORCHESTRATION_VARS }}"
-      marker: '#{mark} add ws access to redshift'
+      marker: '#{mark} add ws access configs'
       insertafter: '^FOUNDATION_CONFIGURATION:'
       block: |2
           1: ODBCINI=/opt/sas/spre/home/lib64/accessclients/odbc.ini
           2: ODBCINST=/opt/sas/spre/home/lib64/accessclients/odbcinst.ini
           3: ODBCHOME=/opt/sas/spre/home/lib64/accessclients
-          4: LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ODBCHOME/lib
+          4: LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ODBCHOME/lib:/opt/sas/spre/home/lib64
+          5: PATH=$PATH:/opt/sas/spre/home/lib64/psql
+          6: PGCLIENTENCODING=UTF-8
 
   - name: set CAS Settings
     replace:
@@ -74,6 +76,12 @@
       regexp:  '#2: ODBCINI=.*'
       replace: '2: ODBCINI=$ODBCHOME/odbc.ini'
 
+  - name: set PGCLIENTENCODING
+    replace:
+      dest: "{{ ORCHESTRATION_VARS }}"
+      regexp:  '#3: ORACLE_HOME=Oracle home directory.*'
+      replace: '3: PGCLIENTENCODING=UTF-8'
+
   - name: set JAVA_HOME
     replace:
       dest: "{{ ORCHESTRATION_VARS }}"
@@ -84,7 +92,7 @@
     replace:
       dest: "{{ ORCHESTRATION_VARS }}"
       regexp:  '#5: LD_LIBRARY_PATH=.*'
-      replace: '5: LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ODBCHOME/lib:$JAVA_HOME/lib/amd64/server'
+      replace: '5: LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ODBCHOME/lib:$JAVA_HOME/lib/amd64/server:/opt/sas/viya/home/lib64'
 
   - name: set pg host
     replace:

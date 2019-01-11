@@ -28,6 +28,32 @@ Before deploying SAS Viya Quickstart Template for Azure, you must have the follo
 		SAS Visual Statistics 8.3 on Linux
         SAS Visual Data Mining and Machine Learning 8.3 on Linux
 *  The license .zip file from your software order uploaded to a blob.
+*  Ensure that your file uploads meet the limits of the Application Gateway.  For details on limits, see 
+["Application Gateway limits."]({https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits?toc=%2fazure%2fapplication-gateway%2ftoc.json#application-gateway-limits)
+## (Optional) Create a Mirror Repository 
+To use a mirror repository, you create a mirror repository as documented in ["Create a Mirror Repository"]({https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p1ilrw734naazfn119i2rqik91r0.htm&docsetVersion=3.4&locale=en) in the SAS Viya 3.4 for Linux: Deployment Guide.  
+
+Note: To be considered as a directory mirror by the system, the URL must end in a "/" directly before the SAS key. 
+
+You can then either:
+* Use the default method which downloads the install files directly from SAS.
+
+* Upload the entire mirror to Azure blob storage.
+
+
+1. Upload the mirror:
+```
+az storage blob upload-batch --account-name "$STORAGE_ACCOUNT" --account-key "$STORAGEKEY" --destination "$SHARE_NAME" --destination-path "$SUBDIRECTORY_NAME" --source "$(pwd)" 
+```
+2. Create a SAS key that has (at a minimum) list and read on the blob store.
+
+3. During deployment, set the DeploymentMirror parameter to the URL of the folder in Azure blob that is qualified by that SAS key. 
+Note: For the system to recognize the mirror directory, the URL must end in a "/" directly before the SAS key.
+* Compress the folder and upload to Azure blob or another storage location that is secure.
+1. Zip up the entire folder as a compressed tar archive. For example, .tar.gz/.tgz. 
+2. Upload the compressed tar archive to Azure blob storage or another storage location that is accessible from the Internet and can be secured. 
+3. During deployment, set the DeploymentMirror parameter to the authenticated URL. In the case of blob storage, this would be the path URL to the blob that is qualified by a SAS key.
+
   
 ## Solution Summary
 By default, Quickstart deployments enable Transport Layer Security (TLS) to help ensure that communication is secure.
@@ -37,6 +63,9 @@ This SAS Viya Quickstart Template for Azure will take a generic license for SAS 
 Deploying this Quick Start with default parameters builds the following SAS Viya environment in the Microsoft Azure  Cloud, shown in 
 
 XX NEED PIC XX
+
+* 
+For details, see the deployment guide.
 
 ## Upload the License .ZIP file to a Microsoft Azure Blob and Getting a SAS URI
 
@@ -54,7 +83,7 @@ Before you run the deployment:
 4. Make a note of the blob SAS URL for use during deployment. 
 
 ## Deployment Steps
-You can click the "Deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
+You can click the "Deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repository.
 
 The deployment takes about 90 to 180 minutes.
 
@@ -63,15 +92,15 @@ The deployment takes about 90 to 180 minutes.
 
 By default, the Quick Start deployment will generate a highly unique DNS name for your deployment and a self-signed certificate for secure connections. 
 
-The self-signed certificate is untrusted.  To secure your enviornment, add a new shorter DNS name and get a  proper Certificate Authority signed certificate. 
+The self-signed certificate is untrusted.  To secure your environment, add a new shorter DNS name and get a  proper Certificate Authority signed certificate. 
 
 If you acquire a domain address, either:
 * create  a CNAME DNS entry at the current unique DNS
-* create a traditional A record at the application gateway IP. 
+* create a traditional A record at the application gateway IP 
  
-If you have aquired a new domain or are using the existing domain, you can create a trusted certificate and upload it to the application gateway. For details, see [Configure an application gateway with SSL termination using the Azure portal](https://docs.microsoft.com/en-us/azure/application-gateway/create-ssl-portal).
+If you have acquired a new domain or are using the existing domain, you can create a trusted certificate and upload it to the application gateway. For details, see [Configure an application gateway with SSL termination using the Azure portal](https://docs.microsoft.com/en-us/azure/application-gateway/create-ssl-portal).
 
-### Validate the Server Certificate if Using ODBC.
+### Validate the Server Certificate if Using ODBC
 If you are using SAS/ACCESS to ODBC, unvalidated SSL certificates are not supported.
 
 ### Set Up ODBC and Microsoft SQL Server
@@ -143,10 +172,10 @@ TrustStore=
 TrustStorePassword=
 ```
 
-5. if you want SSL but require a certificate, set ValidateServerCertificate to 1. 
+5. You must ensure ValidateServerCertificate is set to a value of 1. 
 
 ``` 
-ValidateServerCertificate=0 
+ValidateServerCertificate=1 
 WorkStationID= 
 XMLDescribeType=-10 
 SSLLibName=/usr/lib64/libssl.so.1.0.2k 
@@ -154,7 +183,7 @@ CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
 ```
 
 6. Save the odbc.ini files. 
-
+## Other Post-install
 
 ## Usage 
 
@@ -209,7 +238,7 @@ After SSSD has been configured, you may need to restart the Prog machine.
 ### To log in and list all users and groups:
 From the Ansible controller VM, log into the 'Stateful' VM: 
 ```
-ssh stateful.viya.sas
+ssh services.viya.sas
 ```
 ### To list all users and groups: 
 
@@ -232,7 +261,8 @@ objectClass: top
 objectClass: inetOrgPerson
 objectClass: organizationalPerson
 objectClass: posixAccount
-loginShell: /bin/bashuidNumber: 100011
+loginShell: /bin/bash
+uidNumber: 100011
 gidNumber: 100001
 homeDirectory: /home/newuser
 mail: newuser@stateful.viya.sas
@@ -259,11 +289,11 @@ ldapadd -x -h localhost -D "cn=admin,dc=sasviya,dc=com" -W -f /path/to/user/file
 ```
 4.	Add the home directories for your new user on the programming machine (prog.viya.sas) and the CAS controller (controller.viya.sas). From the Ansible controller VM:
 ```
-ssh prog.viya.sas
+ssh services
 sudo mkdir -p /home/newuser
 sudo chown newuser:sasusers /home/newuser
 exit
-ssh controller.viya.sas
+ssh controller
 sudo mkdir -p /home/newuser/casuser
 sudo chown newuser:sasusers /home/newuser
 sudo chown newuser:sasusers /home/newuser/casuser
@@ -271,7 +301,7 @@ exit
 ```
 ### To change a password or set the password for a new user:
 ```
-ldappasswd –h localhost –s USERPASSWORD –W –D cn=admin,dc=sasviya,dc=com -x “uid=newuser,ou=users,dc=sasviya,dc=com”
+ldappasswd -h localhost -s USERPASSWORD -W -D cn=admin,dc=sasviya,dc=com -x "uid=newuser,ou=users,dc=sasviya,dc=com" 
 ```
 **Note:**    To prevent the command from being saved to the bash history, preface this command with a space. The string following the -x should match the dn: attribute of the user.
 

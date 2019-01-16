@@ -17,4 +17,4 @@ mkdir -p /mnt/resource/sastmp/cascache
 echo "granting rights to created temp dir"
 chown -R ${SAS_USER}:${SAS_GROUP} /mnt/resource/sastmp
 echo "opening group permissions so the cas can write as well"
-chmod -R 775 /mnt/resource/sastmp
+chmod -R 777 /mnt/resource/sastmp

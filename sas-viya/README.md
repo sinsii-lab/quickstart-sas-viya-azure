@@ -11,7 +11,7 @@ This Quickstart is a reference architecture for users who want to deploy the SAS
 
 ## Costs and Licenses
 You are responsible for the cost of the Azure services used while running this Quickstart reference deployment. There is no additional cost for using the Quickstart.
-You will need a SAS license to launch this Quick Start. Your SAS account team and the SAS Enterprise Excellence Center can advise on the appropriate software licensing and sizing to meet workload and performance needs.
+You will need a SAS license to launch this Quickstart. Your SAS account team and the SAS Enterprise Excellence Center can advise on the appropriate software licensing and sizing to meet workload and performance needs.
 The SAS Viya Quickstart Template for Azure creates 3 instances, including 
 * 1 compute virtual machine (VM), the Cloud Analytic Services (CAS) controller
 * 1 VM for administration, the Ansible controller
@@ -59,24 +59,25 @@ By default, Quickstart deployments enable Transport Layer Security (TLS) to help
 
 This SAS Viya Quickstart Template for Azure will take a generic license for SAS Viya and deploy it into its own network. The deployment will create the network and other infrastructure.  After the deployment completes, you will have the outputs for the Web endpoints for a deployed SAS Viya on recommended VMs. 
 
-Deploying this Quick Start with default parameters builds the following SAS Viya environment in the Microsoft Azure  Cloud, shown in 
+Deploying this Quickstart with default parameters builds the following SAS Viya environment in the Microsoft Azure  Cloud, shown in 
 
-XX NEED PIC XX
+![Network Diagram](AzureNetworkDiagram.jpg)
 
-* 
-For details, see the deployment guide.
+* For details, see the deployment guide.
 ## Upload the License .ZIP file to a Microsoft Azure Blob and Getting a SAS URI
 
-When you run the deployment, you will need the blob Shared Access SIgnature (SAS) URL as a parameter. 
+When you run the deployment, you will need the blob Shared Access Signature (SAS) URL as a parameter. 
 
 Before you run the deployment:
-1. Upload the license file to the Azure block blob.  Follow the Microsoft Azure instructions to 
+1. Upload the license file to Azure Blob Storage.  Follow the Microsoft Azure instructions to 
 ["Create a Container" and "Upload a Block Blob"](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-portal).
 
-2. Create a Shared Access signature (SAS) token.  For details, see 
- ["Using Shared Access Signatures"](https://docs.microsoft.com/en-us/azure/storage/common/storage-dotnet-shared-access-signature-part-1).
+2. Create a Shared Access signature (SAS) token. Follow these steps to create a Service SAS: 
+* Navigate to the license file blob and select Generate SAS, then click Generate blob SAS token and URL.
+* Make a note of the blob SAS URL for use during deployment.
+For details, see ["Using Shared Access Signatures"](https://docs.microsoft.com/en-us/azure/storage/common/storage-dotnet-shared-access-signature-part-1).
  
- 3. Create a Service SAS. Navigate to the license file blob and select **Generate SAS**, then click **Generate blob SAS token and URL.**
+3. Create a Service SAS. Navigate to the license file blob and select **Generate SAS**, then click **Generate blob SAS token and URL.**
 
 4. Make a note of the blob SAS URL for use during deployment. 
 
@@ -88,18 +89,17 @@ The deployment takes about 90 to 180 minutes.
 ## Optional Post-Deployment 
 ### Create a Record for the DNS Name in Order to Associate a Certificate
 
-By default, the Quick Start deployment will generate a highly unique DNS name for your deployment and a self-signed certificate for secure connections. 
+By default, the Quickstart deployment will generate a highly unique DNS name for your deployment and a self-signed certificate for secure connections. While this is sufficient for limited use-cases or proof of concepts, because a self-signed cert provides limited protection against man in the middle attacks and the default DNS is computer readable, it is recommended that you change the DNS and provide a Trusted Root signed certificate.
 
-The self-signed certificate is untrusted.  To secure your environment, add a new shorter DNS name and get a  proper Certificate Authority signed certificate. 
-
-If you acquire a domain address, either:
-* create  a CNAME DNS entry at the current unique DNS
-* create a traditional A record at the application gateway IP 
+Once you have acquired a domain name and tls certificate from your corporate IT or a Domain Name Registrar/Certificate Authority, then using a Domain Name Server, either:
+* create a CNAME or Alias record at the current unique Domain Name of the application gateway.
+* create a traditional A record at the application gateway IP .
  
-If you have acquired a new domain or are using the existing domain, you can create a trusted certificate and upload it to the application gateway. For details, see [Renew Application Gateway certificates](https://docs.microsoft.com/en-us/azure/application-gateway/renew-certificates).
+If you have acquired a new domain or are using the existing domain, you can upload a trusted certificate for it to the application gateway. For details, see [Renew Application Gateway certificates](https://docs.microsoft.com/en-us/azure/application-gateway/renew-certificates).
+
 ### Enable Access to Existing Data Sources
 To access an existing data source from your SAS Viya deployment, add an inbound rule to each security group or firewall for the data source as follows:
-* If your data source is accessed by transiting the public Internet, add a public IP to the the SAS Viya "services" VM and SAS Viya "controller" VM. Add an Allow rule for each of these IPs. For details, see: 
+* If your data source is accessed by transiting the public Internet, add a public IP to the the SAS Viya "services" VM and SAS Viya "controller" VM. Add an Allow rule for each of these IPs. In this case, a Static IP using the "Standard" SKU is recommended. For details, see: 
  ["Create, change, or delete a public IP address."](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-public-ip-address)
 
 * If you have an Azure-managed database, add the service endpoint for the database to your SAS Viya network's private subnet. For details, see
@@ -108,8 +108,12 @@ To access an existing data source from your SAS Viya deployment, add an inbound 
 * If you have peered the virtual network, add a rule to Allow the private subnet CIDR range for the SAS Viya network. (By default, 10.0.127.0/24). For details, see 
  ["Virtual network peering."](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-peering-overview)
  
-### Validate the Server Certificate if Using ODBC
-If you are using SAS/ACCESS with SSL/TLS, unvalidated SSL certificates are not supported. In this case, a valid trust store must be provided.
+Data sources accessed through SAS ACCESS should use the SAS Deployment Guide instructions for [Post-install Configuration](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.4&locale=en) and [Data Source Validation](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=n18cthgsfyxndyn1imqkbfjisxsv.htm&docsetVersion=3.4&locale=en).
+
+### Validate the Server Certificate if Using ODBC DSNs
+If you are using SAS/ACCESS with SSL/TLS, unvalidated SSL certificates are not supported. In this case, a trust store must be explicitly provided.
+
+Note: For most Azure managed data sources, the standard openssl trust store will validate the Data Source's certificate: "/etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt"
 
 ### Set Up ODBC and Microsoft SQL Server
 1. Locate the following two odbc.ini files:
@@ -209,7 +213,7 @@ CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
     nc -v -z  <DNS of SAS Viya endpoint> 443
 ``` 
 4. To allow access from your SAS Viya network, open the firewall of the SAS Data Agent Environment. You can either:
-    * Add a public IP address to both the controller and services VMs and allow port 443 from the public IPs of your install. For details, see ["SAS Data Agent for Linux Deployment Guide."](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-public-ip-address) 
+    * Add a public IP address to both the controller and services VMs and allow port 443 from the public IPs of your install. In this case, a Static IP using the "Standard" SKU is recommended. For details, see ["Create, change, or delete a public IP address."](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-public-ip-address) 
     
     * Allow general access to port 443 to all IP addresses.
 
@@ -298,7 +302,7 @@ After SSSD has been configured, you may need to restart the Prog machine.
 ## Addendum B: Managing Users for the Provided OpenLDAP Server
 
 ### To log in and list all users and groups:
-From the Ansible controller VM, log into the 'Stateful' VM: 
+From the Ansible controller VM, log into the 'Services' VM: 
 ```
 ssh services.viya.sas
 ```
@@ -327,7 +331,7 @@ loginShell: /bin/bash
 uidNumber: 100011
 gidNumber: 100001
 homeDirectory: /home/newuser
-mail: newuser@stateful.viya.sas
+mail: newuser@services.viya.sas
 displayName: New User 
 ```
 
@@ -349,7 +353,7 @@ add: member
 member: uid=newuser,ou=users,dc=sasviya,dc=com
 ldapadd -x -h localhost -D "cn=admin,dc=sasviya,dc=com" -W -f /path/to/user/file
 ```
-4.	Add the home directories for your new user on the programming machine (prog.viya.sas) and the CAS controller (controller.viya.sas). From the Ansible controller VM:
+4.	Add the home directories for your new user on the services and controller VMs. From the Ansible controller VM:
 ```
 ssh services
 sudo mkdir -p /home/newuser

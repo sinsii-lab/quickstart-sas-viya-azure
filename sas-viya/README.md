@@ -73,13 +73,11 @@ Before you run the deployment:
 ["Create a Container" and "Upload a Block Blob"](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-portal).
 
 2. Create a Shared Access signature (SAS) token. Follow these steps to create a Service SAS: 
-* Navigate to the license file blob and select Generate SAS, then click Generate blob SAS token and URL.
-* Make a note of the blob SAS URL for use during deployment.
+    * Navigate to the license file blob and select Generate SAS, then click Generate blob SAS token and URL.
+    * Make a note of the blob SAS URL for use during deployment.
 For details, see ["Using Shared Access Signatures"](https://docs.microsoft.com/en-us/azure/storage/common/storage-dotnet-shared-access-signature-part-1).
  
-3. Create a Service SAS. Navigate to the license file blob and select **Generate SAS**, then click **Generate blob SAS token and URL.**
-
-4. Make a note of the blob SAS URL for use during deployment. 
+3. Make a note of the blob SAS URL for use during deployment. 
 
 ## Deployment Steps
 You can click the "Deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repository.
@@ -108,9 +106,9 @@ To access an existing data source from your SAS Viya deployment, add an inbound 
 * If you have peered the virtual network, add a rule to Allow the private subnet CIDR range for the SAS Viya network. (By default, 10.0.127.0/24). For details, see 
  ["Virtual network peering."](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-peering-overview)
  
-Data sources accessed through SAS ACCESS should use the SAS Deployment Guide instructions for [Post-install Configuration](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.4&locale=en) and [Data Source Validation](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=n18cthgsfyxndyn1imqkbfjisxsv.htm&docsetVersion=3.4&locale=en).
+Data sources accessed through SAS/ACCESS should use the SAS Deployment Guide instructions for [Post-install Configuration](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.4&locale=en) and [Data Source Validation](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=n18cthgsfyxndyn1imqkbfjisxsv.htm&docsetVersion=3.4&locale=en).
 
-### Validate the Server Certificate if Using ODBC DSNs
+### Validate the Server Certificate if Using SAS/ACCESS
 If you are using SAS/ACCESS with SSL/TLS, unvalidated SSL certificates are not supported. In this case, a trust store must be explicitly provided.
 
 Note: For most Azure managed data sources, the standard openssl trust store will validate the Data Source's certificate: "/etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt"
@@ -198,8 +196,8 @@ CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
 ### Set Up SAS Data Agent
 
 1. Perform the pre-nstallation and installation steps in the ["SAS Data Agent for Linux Deployment Guide."](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=p06vsqpjpj2motn1qhi5t40u8xf4.htm&docsetVersion=2.3&locale=en) For the post-installation tasks, you can either:
-* (Recommended) Use the post-install playbooks as specified in steps 6 and 7 below.
-* Perform the manual steps in the SAS Data Agent Deployment Guide.
+    * (Recommended) Use the post-install playbooks as specified in steps 6 and 7 below.
+    * Perform the manual steps in the SAS Data Agent Deployment Guide.
 
 2. In the SAS Viya plus SAS Data Preparation environment, open the firewall to allow access on port 443 as follows:
 

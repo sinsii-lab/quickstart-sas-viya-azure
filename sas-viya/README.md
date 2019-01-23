@@ -28,33 +28,33 @@ This Quickstart is a reference architecture for users who want to deploy the SAS
 1. [Usage](#Usage)
 1. [Addendum A: Configuring the Identities Service](#AddA)
     1. [Verify Security Settings](#AddAVerify)
-    1. [Create Service Account](#AddACreateServiceAccount)
+    1. [Create a Service Account](#AddACreateServiceAccount)
     1. [Configure the Identities Service](#AddAConfigureIdentitiesService)
     1. [Verify the Configuration](#AddAVerifyTheConfiguration)
     1. [Configure PAM for SAS Studio](#AddAConfigurePam)
 1. [Addendum B: Managing Users for the Provided OpenLDAP Server](#AddB)
-    1. [List all users and groups](#AddBLoginAndList)
+    1. [List all Users and Groups](#AddBLoginAndList)
     1. [Add a User](#AddBAddUser)
     1. [Change or set a Password](#AddBPassword)
     1. [Delete a User](#AddBDeleteUser)
 
 <a name="Summary"></a>
 ## Solution Summary
-By default, Quickstart deployments enable Transport Layer Security (TLS) to help ensure that communication is secure.
+By default, Quickstart deployments enable Transport Layer Security (TLS) for secure communication.
 
-This SAS Viya Quickstart Template for Azure will take a generic license for SAS Viya and deploy it into its own network. The deployment will create the network and other infrastructure.  After the deployment completes, you will have the outputs for the Web endpoints for a deployed SAS Viya on recommended VMs. 
+This SAS Viya Quickstart Template for Azure will take a generic license for SAS Viya and deploy SAS into its own network. The deployment will create the network and other infrastructure.  After the deployment completes, you will have the outputs for the Web endpoints for a deployed SAS Viya on recommended VMs. 
 
-Deploying this Quickstart with default parameters builds the following SAS Viya environment in the Microsoft Azure  Cloud, shown in 
+Deploying this Quickstart with default parameters builds the following SAS Viya environment in the Microsoft Azure Cloud, as shown in the following diagram. 
 
 ![Network Diagram](AzureNetworkDiagram.jpg)
 
-* For details, see the deployment guide.
+For details, see the  [SAS Viya 3.4 for Linux: Deployment Guide](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=titlepage.htm&docsetVersion=3.4&locale=en).
 
 <a name="Costs"></a>
 ### Costs and Licenses
 You are responsible for the cost of the Azure services used while running this Quickstart reference deployment. There is no additional cost for using the Quickstart.
 You will need a SAS license to launch this Quickstart. Your SAS account team and the SAS Enterprise Excellence Center can advise on the appropriate software licensing and sizing to meet workload and performance needs.
-The SAS Viya Quickstart Template for Azure creates 3 instances, including 
+The SAS Viya Quickstart Template for Azure creates 3 instances, including: 
 * 1 compute virtual machine (VM), the Cloud Analytic Services (CAS) controller
 * 1 VM for administration, the Ansible controller
 * 1 VM for the SAS Viya services
@@ -63,13 +63,13 @@ The SAS Viya Quickstart Template for Azure creates 3 instances, including
 ## Prerequisites
 Before deploying SAS Viya Quickstart Template for Azure, you must have the following:
 * Azure user account with Contributor and Admin Roles
-* Sufficient Quota of at least 28 Cores (assuming 4 licensed SAS cores)
+* Sufficient quota of at least 28 Cores, based on 4 licensed SAS cores
 * A SAS Software Order Confirmation e-mail that contains supported Quickstart products:
 
  		SAS Visual Analytics 8.3 on Linux
 		SAS Visual Statistics 8.3 on Linux
         SAS Visual Data Mining and Machine Learning 8.3 on Linux
-*  The license .zip file from your software order uploaded to a blob
+*  The license .zip file from your software order uploaded to an Azure blob
 *  Verification that your file uploads meet the limits of the Application Gateway.  For details on limits, see 
 ["Application Gateway limits."](https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits?toc=%2fazure%2fapplication-gateway%2ftoc.json#application-gateway-limits)
 
@@ -77,12 +77,15 @@ Before deploying SAS Viya Quickstart Template for Azure, you must have the follo
 ### (Optional) Create a Mirror Repository 
 To use a mirror repository, you create a mirror repository as documented in ["Create a Mirror Repository"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p1ilrw734naazfn119i2rqik91r0.htm&docsetVersion=3.4&locale=en) in the SAS Viya 3.4 for Linux: Deployment Guide.  
 
-Note: To be considered as a directory mirror by the system, the URL must end in a "/" directly before the SAS key. 
+Note: To be considered as a directory mirror by the system, the URL must end with a "/" directly before the SAS key. 
 
 You can then either:
-* Use the default method which downloads the install files directly from SAS.
+* Use the default method, which downloads the install files directly from SAS.
+* Upload the entire mirror to Azure blob storage.
+* Compress the folder and upload to an Azure blob or another storage location that is secure.
 
-* Upload the entire mirror to Azure blob storage as follows:
+
+### Upload the Entire Mirror to Azure Blob Storage 
 1. Upload the mirror:
 ```
 az storage blob upload-batch --account-name "$STORAGE_ACCOUNT" --account-key "$STORAGEKEY" --destination "$SHARE_NAME" --destination-path "$SUBDIRECTORY_NAME" --source "$(pwd)" 
@@ -91,27 +94,27 @@ az storage blob upload-batch --account-name "$STORAGE_ACCOUNT" --account-key "$S
 
 3. During deployment, set the DeploymentMirror parameter to the URL of the folder in Azure blob that is qualified by that SAS key. 
 
-Note: For the system to recognize the mirror directory, the URL must end in a "/" directly before the SAS key.
-* Compress the folder and upload to Azure blob or another storage location that is secure as follows:
+**Note:** For the system to recognize the mirror directory, the URL must end with a "/" directly before the SAS key.
+### Compress the Folder and Upload to Azure Blob or Another Storage Location that is Secure:
 1. Zip up the entire folder as a compressed tar archive. For example, .tar.gz/.tgz. 
 2. Upload the compressed tar archive to Azure blob storage or another storage location that is accessible from the Internet and can be secured. 
-3. During deployment, set the DeploymentMirror parameter to the authenticated URL. In the case of blob storage, this would be the path URL to the blob that is qualified by a SAS key.
+3. During deployment, set the DeploymentMirror parameter to the authenticated URL. In the case of blob storage, the URL is the path URL to the blob that is qualified by a SAS key.
 
 <a name="License"></a>
 ### Upload the License .ZIP file to a Microsoft Azure Blob and Getting a SAS URI
-
 When you run the deployment, you will need the blob Shared Access Signature (SAS) URL as a parameter. 
 
 Before you run the deployment:
 1. Upload the license file to Azure Blob Storage.  Follow the Microsoft Azure instructions to 
-["Create a Container" and "Upload a Block Blob"](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-portal).
+["Create a Container"](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-portal) and 
+["Upload a Block Blob."](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-portal)
 
 2. Create a Shared Access signature (SAS) token. Follow these steps to create a Service SAS: 
     * Navigate to the license file blob and select Generate SAS, then click Generate blob SAS token and URL.
     * Make a note of the blob SAS URL for use during deployment.
-For details, see ["Using Shared Access Signatures"](https://docs.microsoft.com/en-us/azure/storage/common/storage-dotnet-shared-access-signature-part-1).
- 
-3. Make a note of the blob SAS URL for use during deployment. 
+    
+For details, see ["Using Shared Access Signatures."](https://docs.microsoft.com/en-us/azure/storage/common/storage-dotnet-shared-access-signature-part-1)
+
 <a name="Deployment"></a>
 ## Deployment Steps
 You can click the "Deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repository.
@@ -122,19 +125,18 @@ The deployment takes between 1 and 4 hours, depending on the quantity of softwar
 ## Optional Post-Deployment 
 <a name="DNS"></a>
 ### Create a Record for the DNS Name in Order to Associate a Certificate
+By default, the Quickstart deployment will generate a highly-unique DNS name for your deployment and a self-signed certificate for secure connections. This is sufficient for limited use-cases or proof of concepts. However because a self-signed certificate provides limited protection against man in the middle attacks and the default DNS is computer readable, it is recommended that you change the DNS and provide a Trusted Root signed certificate.
 
-By default, the Quickstart deployment will generate a highly unique DNS name for your deployment and a self-signed certificate for secure connections. While this is sufficient for limited use-cases or proof of concepts, because a self-signed cert provides limited protection against man in the middle attacks and the default DNS is computer readable, it is recommended that you change the DNS and provide a Trusted Root signed certificate.
-
-Once you have acquired a domain name and tls certificate from your corporate IT or a Domain Name Registrar/Certificate Authority, then using a Domain Name Server, either:
-* create a CNAME or Alias record at the current unique Domain Name of the application gateway.
-* create a traditional A record at the application gateway IP .
+After acquiring a domain name and TLS certificate from your corporate IT or a Domain Name Registrar/Certificate Authority, use a Domain Name Server to do one of the following:
+* create a CNAME or Alias record at the current unique Domain Name of the application gateway
+* create a traditional A record at the application gateway IP 
  
-If you have acquired a new domain or are using the existing domain, you can upload a trusted certificate for it to the application gateway. For details, see [Renew Application Gateway certificates](https://docs.microsoft.com/en-us/azure/application-gateway/renew-certificates).
+If you have acquired a new domain or are using the existing domain, you can upload a trusted certificate for the domain to the application gateway. For details, see ["Renew Application Gateway certificates."](https://docs.microsoft.com/en-us/azure/application-gateway/renew-certificates)
 
 <a name="DataSources"></a>
 ### Enable Access to Existing Data Sources
 To access an existing data source from your SAS Viya deployment, add an inbound rule to each security group or firewall for the data source as follows:
-* If your data source is accessed by transiting the public Internet, add a public IP to the the SAS Viya "services" VM and SAS Viya "controller" VM. Add an Allow rule for each of these IPs. In this case, a Static IP using the "Standard" SKU is recommended. For details, see: 
+* If your data source is accessed by transiting the public Internet, add a public IP to the the SAS Viya services VM and SAS Viya controller VM. Add an Allow rule for each of these IPs. In this case, a Static IP using the "Standard" SKU is recommended. For details, see: 
  ["Create, change, or delete a public IP address."](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-public-ip-address)
 
 * If you have an Azure-managed database, add the service endpoint for the database to your SAS Viya network's private subnet. For details, see
@@ -143,13 +145,16 @@ To access an existing data source from your SAS Viya deployment, add an inbound 
 * If you have peered the virtual network, add a rule to Allow the private subnet CIDR range for the SAS Viya network. (By default, 10.0.127.0/24). For details, see 
  ["Virtual network peering."](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-peering-overview)
  
-Data sources accessed through SAS/ACCESS should use the SAS Deployment Guide instructions for [Post-install Configuration](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.4&locale=en) and [Data Source Validation](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=n18cthgsfyxndyn1imqkbfjisxsv.htm&docsetVersion=3.4&locale=en).
+Data sources accessed through SAS/ACCESS should use the [SAS Data Agent for Linux Deployment Guide](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=p06vsqpjpj2motn1qhi5t40u8xf4.htm&docsetVersion=2.3&locale=en) instructions to  ["Configure Data Access"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.4&locale=en) and ["Validate the Deployment."](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=n18cthgsfyxndyn1imqkbfjisxsv.htm&docsetVersion=3.4&locale=en)
+
 <a name="ACCESSCertWarn"></a>
 ### Validate the Server Certificate if Using SAS/ACCESS
 If you are using SAS/ACCESS with SSL/TLS, unvalidated SSL certificates are not supported. In this case, a trust store must be explicitly provided.
 
-Note: For most Azure managed data sources, the standard openssl trust store will validate the Data Source's certificate: "/etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt"
-
+Note: For most Azure managed data sources, the standard OpenSSL trust store will validate the data source certificate:
+```
+/etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt
+```
 <a name="MSSQL"></a>
 ### Set Up ODBC and Microsoft SQL Server
 1. Locate the following two odbc.ini files:
@@ -158,13 +163,13 @@ Note: For most Azure managed data sources, the standard openssl trust store will
 
 2. For each file, modify the parameters per the following examples.  For details about how to configure:
 * For detailed information about configuring data access, see 
- ["Configure Data Access"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.4&locale=en) in the SAS Viya Deployment Guide.
-* For specific DataDirect information, see ["Configuration Through the System Information (odbc.ini) File"](https://documentation.progress.com/output/DataDirect/odbcsqlserverhelp/index.html#page/odbcsqlserver%2Fconfiguration-through-the-system-information-(od.html%23)).
+ ["Configure Data Access"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.4&locale=en) in the [SAS Data Agent for Linux Deployment Guide. ](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=p06vsqpjpj2motn1qhi5t40u8xf4.htm&docsetVersion=2.3&locale=en)
+  
+* For specific DataDirect information, see ["Configuration Through the System Information (odbc.ini) File."](https://documentation.progress.com/output/DataDirect/odbcsqlserverhelp/index.html#page/odbcsqlserver%2Fconfiguration-through-the-system-information-(od.html%23))
 
 3. For SQLServer, specify the appropriate driver location:
 * For SAS Viya: /opt/sas/spre/home/lib64/accessclients/lib/S0sqls27.so 
 * For CAS controller: /opt/sas/viya/home/lib64/accessclients/lib/S0sqls27.so 
- 
 ```
 [SQLServerTest] 
 Driver=<driver location>
@@ -220,7 +225,7 @@ TrustStore=
 TrustStorePassword=
 ```
 
-5. You must ensure ValidateServerCertificate is set to a value of 1. 
+5. Ensure that ValidateServerCertificate is set to a value of 1. 
 
 ``` 
 ValidateServerCertificate=1 
@@ -235,59 +240,58 @@ CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
 <a name="DataAgent"></a>
 ### Set Up SAS Data Agent
 
-1. Perform the pre-nstallation and installation steps in the ["SAS Data Agent for Linux Deployment Guide."](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=p06vsqpjpj2motn1qhi5t40u8xf4.htm&docsetVersion=2.3&locale=en) For the post-installation tasks, you can either:
-    * (Recommended) Use the post-install playbooks as specified in steps 6 and 7 below.
+1. Perform the pre-installation and installation steps in the ["SAS Data Agent for Linux Deployment Guide."](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=p06vsqpjpj2motn1qhi5t40u8xf4.htm&docsetVersion=2.3&locale=en) For the post-installation tasks, you can either:
+    * (Recommended) Use the post-installation playbooks as specified in steps 6 and 7 below.
     * Perform the manual steps in the SAS Data Agent Deployment Guide.
 
-2. In the SAS Viya plus SAS Data Preparation environment, open the firewall to allow access on port 443 as follows:
+2. In the SAS Viya and SAS Data Preparation environment, open the firewall to allow access on port 443 as follows:
 
       a. Obtain the public IP of the SAS Data agent firewall. The SAS Data Agent firewall address is either the public IP of the machine where the HTTPS service is running or the public IP of the NAT that routes outgoing traffic in the SAS Data Agent network.
 
       b. Modify the security group of the Application Gateway. By default, this is called "PrimaryViyaLoadbalancer_NetworkSecurityGroup" and will be under the resource group of your SAS Viya deployment. Add an inbound rule for port 443 for the public IP found in step a.
       
 3. To verify that the connection works, on the machine assigned to the [httpproxy] host group in the Ansible inventory file in your SAS Data Agent environment, run the following:
-``` 
+   ``` 
     sudo yum install -y nc
-    nc -v -z  <DNS of SAS Viya endpoint> 443
-``` 
+    nc -v -z  <DNS-of-SAS-Viya-endpoint> 443
+   ``` 
 4. To allow access from your SAS Viya network, open the firewall of the SAS Data Agent Environment. You can either:
     * Add a public IP address to both the controller and services VMs and allow port 443 from the public IPs of your install. In this case, a Static IP using the "Standard" SKU is recommended. For details, see ["Create, change, or delete a public IP address."](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-public-ip-address) 
     
     * Allow general access to port 443 to all IP addresses.
 
-5. To verify that the connection works, on the services host run the following:
+5. To verify the connection, on the services host:
     ``` 
     sudo yum install -y nc
-    nc -v -z  <IP or DNS of the SAS Data Agent host> 443
+    nc -v -z  <IP-or-DNS-of-the-SAS-Data-Agent-host> 443
     ``` 
 6. Register the SAS Data Agent with the SAS Viya Environment. As the deployment vmuser, log into the Ansible controller VM and run the following from the /sas/install/setup/orchestration directory:
 
-``` 
-ansible-playbook ansible.dataprep2dataagent.yml \
+   ``` 
+   ansible-playbook ansible.dataprep2dataagent.yml \
        -e "adminuser=sasadmin adminpw=<password of admin user>" \
-       -e "data_agent_host=<FQDN (DNS) of SAS Data Agent machine>" \
-       -e “secret=<handshake string>” \
+       -e "data_agent_host=<FQDN(DNS)-of-SAS-Data-Agent-machine>" \
+       -e “secret=<handshake-string>” \
        -i "/sas/install/setup/orchestration/sas_viya_playbook/inventory.ini"
-```
- 
-The password of the admin user is the value that you specified during deployment for the SASAdminPass input parameter.
+   ```
+   The password of the admin user is the value that you specified during deployment for the SASAdminPass input parameter.
 
 7. Register the SAS Viya environment with the SAS Data Agent. Copy the following file from the Ansible controller in your SAS Viya deployment into the playbook directory (sas_viya_playbook) on your SAS Data Agent deployment:
 
-``` 
-/sas/install/code/postconfig-helpers/dataagent2dataprep.yml
-``` 
+   ``` 
+   /sas/install/code/postconfig-helpers/dataagent2dataprep.yml
+   ``` 
  
-From within the deployment directory for the SAS Data Agent, run the following:
- ``` 
-ansible-playbook dataagent2dataprep.yml \
-       -e "data_prep_host=<DNS of SAS Viya endpoint>" \
-      - e “secret=<handshake string>” 
-```
- 
-Note: The DNS of the SAS Viya endpoint is the value of the SASDrive output parameter, without the " prefix and the "/SASDrive" suffix.
+   From the deployment directory for the SAS Data Agent:
+    ```
+    ansible-playbook dataagent2dataprep.yml \
+       -e "data_prep_host=<DNS-of-SAS-Viya-endpoint>" \
+      - e “secret=<handshake-string>” 
+    ```
+    
+      Note: The DNS of the SAS Viya endpoint is the value of the SASDrive output parameter, without the " prefix and the "/SASDrive" suffix.
 
-8. Validate the environment, including round-trip communication. For details, see the "Validation" chapter of the [SAS Data Agent for Linux Deployment Guide](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=n1v7mc6ox8omgfn1qzjjjektc7te.htm&docsetVersion=2.3&locale=en )
+8. Validate the environment, including round-trip communication. For details, see the "Validation" chapter of the [SAS Data Agent for Linux Deployment Guide.](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=n1v7mc6ox8omgfn1qzjjjektc7te.htm&docsetVersion=2.3&locale=en )
 
 <a name="Usage"></a>
 ## Usage 
@@ -303,7 +307,7 @@ To access SAS Viya applications, navigate to the Outputs screen and access SAS D
 Ensure that port 389 on your Lightweight Directory Access Protocol (LDAP) machine is accessible by the SAS Viya machines.
 
 <a name="AddACreateServiceAccount"></a>
-### Create Service Account
+### Create a Service Account
 Create a service account in your LDAP system. The service account must have permission to read the users and groups that will log into the system.
 
 <a name="AddAConfigureIdentitiesService"></a>
@@ -330,28 +334,28 @@ For further details about configuring the identities service, see [SAS Viya 3.4 
 To verify:
 1.	Log in to SAS Viya with your LDAP accounts. You may need to restart SAS Viya for the LDAP changes to take effect.
 2.	Run the ldapsearch command from one of the SAS Viya machines.
-```
-ldapsearch -x -h <YOUR LDAP HOST> -b <YOUR DN> -D <YOUR LDAP SERVICE ACCOUNT> -W 
-```
+   ```
+   ldapsearch -x -h <YOUR LDAP HOST> -b <YOUR DN> -D <YOUR LDAP SERVICE ACCOUNT> -W 
+   ```
 4.	Enter the password to your LDAP service account.
 If verification is successful, the list of your users and groups is displayed.
 
 <a name="AddAConfigurePam"></a>
 ### Configure PAM for SAS Studio
-SAS Studio does not use the SAS Logon Manager, and thus has different requirements for integration with an LDAP system. SAS Studio manages authentication through a pluggable authentication module (PAM). You can use System Security Services Daemon (SSSD) to integrate the programming machine's (Prog) PAM configuration with your LDAP system.
+SAS Studio does not use the SAS Logon Manager, and thus has different requirements for integration with an LDAP system. SAS Studio manages authentication through a pluggable authentication module (PAM). You can use System Security Services Daemon (SSSD) to integrate the services machine's PAM configuration with your LDAP system.
 To access SAS Studio the following conditions must be met:
 *	The user must exist locally on the system.
 *	The user must have an accessible home directory.
 
 For a step by step guide for configuring SSSD against your LDAP setup, see the RedHat documentation. In many cases SSSD is configured to automatically create home directories when a user logs into the system either via SSH or locally. SAS Studio does not do this; therefore, you must manually create home directories for each remote user.
-After SSSD has been configured, you may need to restart the Prog machine.
+After SSSD has been configured, you may need to restart the services machine.
 
 <a name="AddB"></a>
 ## Addendum B: Managing Users for the Provided OpenLDAP Server
 
 <a name="AddBLoginAndList"></a>
-### To log in and list all users and groups:
-From the Ansible controller VM, log into the 'Services' VM: 
+### List All Users and Groups
+From the Ansible controller VM, log into the services VM: 
 ```
 ssh services.viya.sas
 ```
@@ -362,72 +366,79 @@ ldapsearch -x -h localhost -b "dc=sasviya,dc=com"
 ```
 
 <a name="AddBAddUser"></a>
-### To add a user: 
+### Add a User 
+To add a user:
 1.	 Create a user file that contains all the user info. 
 
 **Note:**    You must increment the UID from the last one displayed by the ldapsearch command.
 
-```
-newuser, sasviya.com
-dn: uid=newuser,ou=users,dc=sasviya,dc=com=
-cn: newuser
-givenName: New
-sn: User
-objectClass: top
-objectClass: inetOrgPerson
-objectClass: organizationalPerson
-objectClass: posixAccount
-loginShell: /bin/bash
-uidNumber: 100011
-gidNumber: 100001
-homeDirectory: /home/newuser
-mail: newuser@services.viya.sas
-displayName: New User 
-```
+   ```
+   newuser, sasviya.com
+   dn: uid=newuser,ou=users,dc=sasviya,dc=com=
+   cn: newuser
+   givenName: New
+   sn: User
+   objectClass: top
+   objectClass: inetOrgPerson
+   objectClass: organizationalPerson
+   objectClass: posixAccount
+   loginShell: /bin/bash
+   uidNumber: 100011
+   gidNumber: 100001
+   homeDirectory: /home/newuser
+   mail: newuser@services.viya.sas
+   displayName: New User  
+   ```
 
 2.	Run the following command. 
-```
-ldapadd -x -h localhost -D "cn=admin,dc=sasviya,dc=com" -W -f /path/to/user/file 
-```
+   ```
+   ldapadd -x -h localhost -D "cn=admin,dc=sasviya,dc=com" -W -f /path/to/user/file 
+   ```
 
 **Note:**    You will be prompted for the admin password (the same one you set when you created the stack).
 
 3.	To allow the new user to access Viya products, add the user as a member of the sasusers group by creating an ldif file with the following data:
-```
-dn: cn=sasusers,ou=groups,dc=sasviya,dc=com
-changetype: modify
-add: memberUid
-memberUid: newuser
+   ```
+   dn: cn=sasusers,ou=groups,dc=sasviya,dc=com
+   changetype: modify
+   add: memberUid
+   memberUid: newuser
 
-add: member
-member: uid=newuser,ou=users,dc=sasviya,dc=com
-ldapadd -x -h localhost -D "cn=admin,dc=sasviya,dc=com" -W -f /path/to/user/file
-```
+   add: member
+   member: uid=newuser,ou=users,dc=sasviya,dc=com
+   ldapadd -x -h localhost -D "cn=admin,dc=sasviya,dc=com" -W -f /path/to/user/file
+   ```
 4.	Add the home directories for your new user on the services and controller VMs. From the Ansible controller VM:
-```
-ssh services
-sudo mkdir -p /home/newuser
-sudo chown newuser:sasusers /home/newuser
-exit
-ssh controller
-sudo mkdir -p /home/newuser/casuser
-sudo chown newuser:sasusers /home/newuser
-sudo chown newuser:sasusers /home/newuser/casuser
-exit
-```
+   ```
+   ssh services
+   sudo mkdir -p /home/newuser
+   sudo chown newuser:sasusers /home/newuser
+   exit
+   ssh controller
+   sudo mkdir -p /home/newuser/casuser
+   sudo chown newuser:sasusers /home/newuser
+   sudo chown newuser:sasusers /home/newuser/casuser
+   exit
+   ```
 
 <a name="AddBPassword"></a>
-### To change a password or set the password for a new user:
+### Change or Set a Password 
+To change a password or set a password for a new user:
 ```
 ldappasswd -h localhost -s USERPASSWORD -W -D cn=admin,dc=sasviya,dc=com -x "uid=newuser,ou=users,dc=sasviya,dc=com" 
 ```
 **Note:**    To prevent the command from being saved to the bash history, preface this command with a space. The string following the -x should match the dn: attribute of the user.
 
 <a name="AddBDeleteUser"></a>
-### To delete a user:
+### Delete a User
+To delete a user:
 ```
 ldapdelete –h localhost -W -D "cn=admin,dc=sasviya,dc=com" "uid=newuser,ou=users,dc=sasviya,dc=com"
 ```
+
+
+
+
 
 
 

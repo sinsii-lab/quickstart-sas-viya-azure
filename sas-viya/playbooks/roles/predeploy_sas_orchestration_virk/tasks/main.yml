@@ -108,6 +108,10 @@
           remote_src: yes
           src: "https://aka.ms/downloadazcopylinux64"
           dest: "/tmp/azcopy_install"
+        register: task_result
+        until: task_result | success
+        retries: 10
+        delay: 5
 
       - name: install azcopy
         become: yes
@@ -127,18 +131,18 @@
       - name: use azsync to download mirror
         become: yes
         shell: >-
-          azcopy --source "{{ MIRROR_HTTP }}" --destination "{{ LOCAL_DIRECTORY_MIRROR }}" --recursive
-        async: 5400
+          timeout -k 7140 7000 azcopy --source "{{ MIRROR_HTTP }}" --destination "{{ LOCAL_DIRECTORY_MIRROR }}" --recursive
+        async: 7200
         failed_when: false
         register: copy_ret1
 
       - name: use azsync to download mirror retry 1
         become: yes
         shell: |-
-          azcopy --source "{{ MIRROR_HTTP }}" --destination "{{ LOCAL_DIRECTORY_MIRROR }}" --recursive<<END
+          timeout -k 7140 7000 azcopy --source "{{ MIRROR_HTTP }}" --destination "{{ LOCAL_DIRECTORY_MIRROR }}" --recursive<<END
           yes
           END
-        async: 5400
+        async: 7200
         failed_when: false
         register: copy_ret2
         when: "copy_ret1.rc != 0"
@@ -146,10 +150,10 @@
       - name: use azsync to download mirror retry 2
         become: yes
         shell: |-
-          azcopy --source "{{ MIRROR_HTTP }}" --destination "{{ LOCAL_DIRECTORY_MIRROR }}" --recursive<<END
+          timeout -k 7140 7000 azcopy --source "{{ MIRROR_HTTP }}" --destination "{{ LOCAL_DIRECTORY_MIRROR }}" --recursive<<END
           yes
           END
-        async: 5400
+        async: 7200
         failed_when: false
         register: copy_ret3
         when: "copy_ret1.rc != 0 and copy_ret2.rc != 0"
@@ -157,10 +161,10 @@
       - name: use azsync to download mirror retry 3
         become: yes
         shell: |-
-          azcopy --source "{{ MIRROR_HTTP }}" --destination "{{ LOCAL_DIRECTORY_MIRROR }}" --recursive<<END
+          timeout -k 7140 7000 azcopy --source "{{ MIRROR_HTTP }}" --destination "{{ LOCAL_DIRECTORY_MIRROR }}" --recursive<<END
           yes
           END
-        async: 5400
+        async: 7200
         failed_when: false
         register: copy_ret4
         when: "copy_ret1.rc != 0 and copy_ret2.rc != 0 and copy_ret3.rc != 0"
@@ -168,10 +172,10 @@
       - name: use azsync to download mirror retry 4
         become: yes
         shell: |-
-          azcopy --source "{{ MIRROR_HTTP }}" --destination "{{ LOCAL_DIRECTORY_MIRROR }}" --recursive<<END
+          timeout -k 7140 7000 azcopy --source "{{ MIRROR_HTTP }}" --destination "{{ LOCAL_DIRECTORY_MIRROR }}" --recursive<<END
           yes
           END
-        async: 5400
+        async: 7200
         register: copy_ret5
         when: "copy_ret1.rc != 0 and copy_ret2.rc != 0 and copy_ret3.rc != 0 and copy_ret4.rc != 0"
 
@@ -215,11 +219,11 @@
     - name: "Use mirror manager to download a copy of the mirror from sas"
       shell: |-
         set -o pipefail
-        "{{ ORCHESTRATION_MIRROR_MANAGER }}" mirror --deployment-data "{{ LICENSE_TEMP_LOCATION }}" --latest --platform x64-redhat-linux-6 --workers 20 -p "{{ LOCAL_DIRECTORY_MIRROR }}" -d 2>&1 | tee -a /tmp/viya_mirror_download.log
+        "timeout -k 3660 3600 {{ ORCHESTRATION_MIRROR_MANAGER }}" mirror --deployment-data "{{ LICENSE_TEMP_LOCATION }}" --latest --platform x64-redhat-linux-6 --workers 20 -p "{{ LOCAL_DIRECTORY_MIRROR }}" -d 2>&1 | tee -a /tmp/viya_mirror_download.log
       retries: 5
       delay: 10
       register: result
-      until: result.rc == 0
+      until: result | success
 
 #    - debug:
 #        var: job_result

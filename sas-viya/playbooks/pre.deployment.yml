@@ -3,7 +3,14 @@
 - hosts: 
     - all
   become: true
+  gather_facts: no
   tasks:
+  - name: Wait for system to become reachable
+    wait_for_connection:
+
+  - name: Gather facts for first time
+    setup:
+
   - name: run async yum update
 #    yum:
 #      name: "*"
@@ -11,7 +18,7 @@
 #      exclude: WALinuxAgent
     command: >-
       yum update -y --exclude WALinuxAgent
-    async: 1200
+    async: 2400
 #    poll: 0
 #    register: YUM_ASYNC
 

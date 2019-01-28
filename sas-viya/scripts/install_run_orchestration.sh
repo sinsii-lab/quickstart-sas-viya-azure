@@ -70,7 +70,7 @@ ran_virk_time="$(date -u +%s)"
 
 sudo chown -R $USER "${ORCHESTRATION_DIRECTORY}"
 cd "${ORCHESTRATION_DIRECTORY}/sas_viya_playbook"
-ansible-playbook -v site.yml
+ansible-playbook site.yml
 ret="$?"
 if [ ! -z "$RETURN_FILE" ]; then
     echo "$ret" > "$RETURN_FILE"

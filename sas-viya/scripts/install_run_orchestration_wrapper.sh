@@ -20,6 +20,8 @@ FILE_OF_RECORD="/tmp/install_run_orchestration.log"
 
 if [ ! -e "$PID_FILE" ]; then
     if [ ! -e "$RETURN_FILE" ]; then
+        touch "$FILE_OF_RECORD"
+        chomd 500 "$FILE_OF_RECORD"
         nohup ${ScriptDirectory}/install_run_orchestration.sh "$RETURN_FILE"  </dev/null &> "$FILE_OF_RECORD" &
         PID=$!
         echo $PID > "$PID_FILE"

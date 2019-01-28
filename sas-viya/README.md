@@ -136,7 +136,7 @@ If you have acquired a new domain or are using the existing domain, you can uplo
 <a name="DataSources"></a>
 ### Enable Access to Existing Data Sources
 To access an existing data source from your SAS Viya deployment, add an inbound rule to each security group or firewall for the data source as follows:
-* If your data source is accessed by transiting the public Internet, add a public IP to the the SAS Viya services VM and SAS Viya controller VM. Add an Allow rule for each of these IPs. In this case, a Static IP using the "Standard" SKU is recommended. For details, see: 
+*  If your data source is accessed by transiting the public Internet, add a public IP to the the SAS Viya services VM and SAS Viya controller VM. Add an Allow rule to your data source for both the services VM and controller VM  public IP addresses. When creating the public IP addresses for each Viya VM, a Static IP using the "Standard" SKU is recommended. For details, see
  ["Create, change, or delete a public IP address."](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-public-ip-address)
 
 * If you have an Azure-managed database, add the service endpoint for the database to your SAS Viya network's private subnet. For details, see
@@ -265,16 +265,26 @@ CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
     sudo yum install -y nc
     nc -v -z  <IP-or-DNS-of-the-SAS-Data-Agent-host> 443
     ``` 
+    
 6. Register the SAS Data Agent with the SAS Viya Environment. As the deployment vmuser, log into the Ansible controller VM and run the following from the /sas/install/setup/orchestration directory:
-
+The password of the admin user is the value that you specified during deployment for the SASAdminPass input parameter.
+   
+   ``` 
+    cp /sas/install/code/postconfig   -helpers/dataprep2dataagent.yml ./dataprep2dataagent.yml
+   
+   
+   ``` 
+   
    ``` 
    ansible-playbook ansible.dataprep2dataagent.yml \
        -e "adminuser=sasadmin adminpw=<password of admin user>" \
        -e "data_agent_host=<FQDN(DNS)-of-SAS-Data-Agent-machine>" \
-       -e “secret=<handshake-string>” \
+       -e "secret=<handshake-string>" \
        -i "/sas/install/setup/orchestration/sas_viya_playbook/inventory.ini"
    ```
-   The password of the admin user is the value that you specified during deployment for the SASAdminPass input parameter.
+
+**Note:** The password of the admin user is the value you gave to the SASAdminPass input parameter.
+________________________________________
 
 7. Register the SAS Viya environment with the SAS Data Agent. Copy the following file from the Ansible controller in your SAS Viya deployment into the playbook directory (sas_viya_playbook) on your SAS Data Agent deployment:
 
@@ -286,7 +296,7 @@ CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
     ```
     ansible-playbook dataagent2dataprep.yml \
        -e "data_prep_host=<DNS-of-SAS-Viya-endpoint>" \
-      - e “secret=<handshake-string>” 
+       -e "secret=<handshake-string>" 
     ```
     
       Note: The DNS of the SAS Viya endpoint is the value of the SASDrive output parameter, without the " prefix and the "/SASDrive" suffix.
@@ -442,3 +452,4 @@ ldapdelete –h localhost -W -D "cn=admin,dc=sasviya,dc=com" "uid=newuser,ou=use
 
 
 
+ 

@@ -20,7 +20,7 @@ This Quickstart is a reference architecture for users who want to deploy the SAS
     1. [Upload the License .ZIP file](#License)
 1. [Deployment Steps](#Deployment)
 1. [Optional Post-Deployment](#Post-Deployment)
-    1. [Create a Record for the DNS Name](#DNS)
+    1. [Configure a Certificate Authority-Signed Digital Certificate and Custom DNS Name](#DNS)
     1. [Enable Access to Existing Data Sources](#DataSources)
     1. [Validate the Server Certificate if Using SAS/ACCESS](#ACCESSCertWarn)
     1. [Set Up ODBC and Microsoft SQL Server](#MSSQL)
@@ -75,15 +75,14 @@ Before deploying SAS Viya Quickstart Template for Azure, you must have the follo
 
 <a name="Mirror"></a>
 ### (Optional) Create a Mirror Repository 
+For your repository, you can either:
+* Use the default method, which downloads the install files directly from SAS.
+* Upload an entire mirror to Azure blob storage.
+* Compress the folder and upload to an Azure blob or another storage location that is secure.
+
 To use a mirror repository, you create a mirror repository as documented in ["Create a Mirror Repository"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p1ilrw734naazfn119i2rqik91r0.htm&docsetVersion=3.4&locale=en) in the SAS Viya 3.4 for Linux: Deployment Guide.  
 
 Note: To be considered as a directory mirror by the system, the URL must end with a "/" directly before the SAS key. 
-
-You can then either:
-* Use the default method, which downloads the install files directly from SAS.
-* Upload the entire mirror to Azure blob storage.
-* Compress the folder and upload to an Azure blob or another storage location that is secure.
-
 
 ### Upload the Entire Mirror to Azure Blob Storage 
 1. Upload the mirror:
@@ -106,8 +105,8 @@ When you run the deployment, you will need the blob Shared Access Signature (SAS
 
 Before you run the deployment:
 1. Upload the license file to Azure Blob Storage.  Follow the Microsoft Azure instructions to 
-["Create a Container"](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-portal) and 
-["Upload a Block Blob."](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-portal)
+["Create a Container"](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-portal#create-a-container) and 
+["Upload a Block Blob."](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-portal#upload-a-block-blob)
 
 2. Create a Shared Access signature (SAS) token. Follow these steps to create a Service SAS: 
     * Navigate to the license file blob and select Generate SAS, then click Generate blob SAS token and URL.
@@ -124,14 +123,14 @@ The deployment takes between 1 and 4 hours, depending on the quantity of softwar
 <a name="Post-Deployment"></a>
 ## Optional Post-Deployment 
 <a name="DNS"></a>
-### Create a Record for the DNS Name in Order to Associate a Certificate
-By default, the Quickstart deployment will generate a highly-unique DNS name for your deployment and a self-signed certificate for secure connections. This is sufficient for limited use-cases or proof of concepts. However because a self-signed certificate provides limited protection against man in the middle attacks and the default DNS is computer readable, it is recommended that you change the DNS and provide a Trusted Root signed certificate.
+ ### Configure a Certificate Authority-Signed Digital Certificate and Custom DNS Name
 
-After acquiring a domain name and TLS certificate from your corporate IT or a Domain Name Registrar/Certificate Authority, use a Domain Name Server to do one of the following:
-* create a CNAME or Alias record at the current unique Domain Name of the application gateway
-* create a traditional A record at the application gateway IP 
- 
-If you have acquired a new domain or are using the existing domain, you can upload a trusted certificate for the domain to the application gateway. For details, see ["Renew Application Gateway certificates."](https://docs.microsoft.com/en-us/azure/application-gateway/renew-certificates)
+By default, the Quickstart deployment will generate a highly-unique DNS name for your deployment and a self-signed certificate for secure connections. This is sufficient for limited use-cases or proof of concepts. However, because a self-signed certificate provides limited protection against man in the middle attacks and the default DNS is computer-readable, it is recommended that you change the DNS name and provide a Trusted Root signed certificate.
+After acquiring a domain name and TLS certificate from your corporate IT or a Domain Name Registrar/Certificate Authority, update your Domain Name Server entry to accomplish one of the following choices:
+* create a CNAME or Alias record at the current unique Domain Name of the application gateway. (Refer to the DNS name attribute under the PrimaryViyaLoadbalancer_PublicIP resource for the current deployment's unique Domain Name)
+* create a traditional A record at the application gateway IP. (Refer to the IP address under the PrimaryViyaLoadbalancer_PublicIP resource for the current deployment's application gateway IP)
+
+If you have acquired a new domain name or are using an existing domain name, you can upload a trusted root signed certificate for that domain to the application gateway. For details, see ["Renew Application Gateway certificates."](https://docs.microsoft.com/en-us/azure/application-gateway/renew-certificates)
 
 <a name="DataSources"></a>
 ### Enable Access to Existing Data Sources
@@ -452,4 +451,3 @@ ldapdelete –h localhost -W -D "cn=admin,dc=sasviya,dc=com" "uid=newuser,ou=use
 
 
 
- 

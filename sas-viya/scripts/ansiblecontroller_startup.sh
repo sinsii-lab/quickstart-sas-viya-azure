@@ -12,6 +12,7 @@ environmentLocation="/sas/install/env.ini"
 
 echo "$@" >> /tmp/commands.log
 mkdir -p "/sas/install"
+
 cat << EOF > "$environmentLocation"
 export SCRIPT_PHASE="$1"
 export https_location="$2"
@@ -48,6 +49,8 @@ export CODE_DIRECTORY="\${SAS_INSTALL_SRC_DIRECTORY}/code"
 export ANSIBLE_SSH_RETRIES=10
 EOF
 . "$environmentLocation"
+chmod 700 "/sas/install"
+chown $PRIMARY_USER "/sas/install"
 #./bastion_bootstrap.sh --enable false
 if [ "$SCRIPT_PHASE" -eq "1" ]; then
 	echo "running ansible prerequisites install"

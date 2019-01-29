@@ -13,6 +13,7 @@
     mode: 0600   
 
 - name: execute base.ldif
+  no_log: true
   shell: "ldapadd -x -D {{OLCROOTDN}} -w '{{OLCROOTPW | b64decode }}' -f {{LDIFLOC}}/base.ldif"
 
 - name: create sasldap.ldif
@@ -22,6 +23,7 @@
     mode: 0600   
 
 - name: execute sasldap.ldif
+  no_log: true
   shell: "ldapadd -x -D {{OLCROOTDN}} -w '{{OLCROOTPW | b64decode }}' -f {{LDIFLOC}}/sasldap.ldif"
 
 
@@ -32,6 +34,7 @@
     mode: 0600
 
 - name: execute sasadmin.ldif
+  no_log: true
   shell: "ldapadd -x -D {{OLCROOTDN}} -w '{{OLCROOTPW | b64decode }}' -f {{LDIFLOC}}/sasadmin.ldif"
 
 
@@ -42,6 +45,7 @@
     mode: 0600   
 
 - name: execute install_users.ldif
+  no_log: true
   #shell: "cat {{LDIFLOC}}/install_users.ldif"
   shell: "ldapadd -x -D {{OLCROOTDN}} -w '{{OLCROOTPW | b64decode }}' -f {{LDIFLOC}}/install_users.ldif"
 

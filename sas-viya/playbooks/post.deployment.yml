@@ -90,6 +90,6 @@
       replace: '\1password: <Password Obfiscated by post processing>'
     with_items:
       - /sas/install/code/openldap/sitedefault.yml
-      - /sas/install/setup/orchestration/sas_viya_playbook/roles/consul/files/sitedefault.yml
       - /var/log/messages
+#      - /sas/install/setup/orchestration/sas_viya_playbook/roles/consul/files/sitedefault.yml
 

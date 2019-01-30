@@ -59,6 +59,15 @@ The SAS Viya Quickstart Template for Azure creates 3 instances, including:
 * 1 VM for administration, the Ansible controller
 * 1 VM for the SAS Viya services
 
+The available licensed core sizes are: 
+
+| Licensed Cores  | Virtual Machine SKU| Memory(RAM) | Maximum Dataset Size | Cache Size |
+| ------------- | ------------- | ------------- | ------------- | ------------- |
+|4  | Standard_E8s_v3   | 64 GB  | 20-40 GB	  |128 GB  |
+| 8 | Standard_E16s_v3  | 128 GB  |20-40 GB	  |256 GB  |
+| 16  | Standard_E32s_v3| 256 GB  | 90-170 GB |512 GB  |
+
+
 <a name="Prerequisites"></a>
 ## Prerequisites
 Before deploying SAS Viya Quickstart Template for Azure, you must have the following:
@@ -82,7 +91,7 @@ For your repository, you can either:
 
 To use a mirror repository, you create a mirror repository as documented in ["Create a Mirror Repository"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p1ilrw734naazfn119i2rqik91r0.htm&docsetVersion=3.4&locale=en) in the SAS Viya 3.4 for Linux: Deployment Guide.  
 
-Note: To be considered as a directory mirror by the system, the URL must end with a "/" directly before the SAS key. 
+**Note:** For the system to recognize the mirror directory, the URL must end with a "/" directly before the SAS key.
 
 ### Upload the Entire Mirror to Azure Blob Storage 
 1. Upload the mirror:
@@ -93,7 +102,7 @@ az storage blob upload-batch --account-name "$STORAGE_ACCOUNT" --account-key "$S
 
 3. During deployment, set the DeploymentMirror parameter to the URL of the folder in Azure blob that is qualified by that SAS key. 
 
-**Note:** For the system to recognize the mirror directory, the URL must end with a "/" directly before the SAS key.
+
 ### Compress the Folder and Upload to Azure Blob or Another Storage Location that is Secure:
 1. Zip up the entire folder as a compressed tar archive. For example, .tar.gz/.tgz. 
 2. Upload the compressed tar archive to Azure blob storage or another storage location that is accessible from the Internet and can be secured. 
@@ -254,10 +263,12 @@ CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
     sudo yum install -y nc
     nc -v -z  <DNS-of-SAS-Viya-endpoint> 443
    ``` 
+   If the output from the nc command contains "Ncat: Connected to <IP_address:44>", the connection was successful.
+   
 4. To allow access from your SAS Viya network, open the firewall of the SAS Data Agent Environment. You can either:
     * Add a public IP address to both the controller and services VMs and allow port 443 from the public IPs of your install. In this case, a Static IP using the "Standard" SKU is recommended. For details, see ["Create, change, or delete a public IP address."](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-public-ip-address) 
     
-    * Allow general access to port 443 to all IP addresses.
+    * Allow general access to port 443 for all IP addresses.
 
 5. To verify the connection, on the services host:
     ``` 
@@ -265,11 +276,13 @@ CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
     nc -v -z  <IP-or-DNS-of-the-SAS-Data-Agent-host> 443
     ``` 
     
+   If the output from the nc command contains "Ncat: Connected to <IP_address:44>", the connection was successful.
+   
 6. Register the SAS Data Agent with the SAS Viya Environment. As the deployment vmuser, log into the Ansible controller VM and run the following from the /sas/install/setup/orchestration directory:
 The password of the admin user is the value that you specified during deployment for the SASAdminPass input parameter.
    
    ``` 
-    cp /sas/install/code/postconfig   -helpers/dataprep2dataagent.yml ./dataprep2dataagent.yml
+    cp /sas/install/code/postconfig-helpers/dataprep2dataagent.yml ./dataprep2dataagent.yml
    
    
    ``` 
@@ -291,7 +304,7 @@ ________________________________________
    /sas/install/code/postconfig-helpers/dataagent2dataprep.yml
    ``` 
  
-   From the deployment directory for the SAS Data Agent:
+   From the playbook directory (sas_viya_playbook) for the SAS Data Agent:
     ```
     ansible-playbook dataagent2dataprep.yml \
        -e "data_prep_host=<DNS-of-SAS-Viya-endpoint>" \

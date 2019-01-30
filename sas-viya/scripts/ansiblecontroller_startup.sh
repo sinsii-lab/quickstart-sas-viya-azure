@@ -66,6 +66,11 @@ elif [ "$SCRIPT_PHASE" -eq "4" ]; then
 elif [ "$SCRIPT_PHASE" -eq "5" ]; then
 	echo "waiting for sync with client servers"
 	${CODE_DIRECTORY}/scripts/ansiblecontroller_waitforsync.sh
+	ret="$?"
+    if [ "$ret" -ne "0" ]; then
+        echo "Timed out after 30 min waiting for Services and Controller to mount shared folder and announce readyness."
+        exit $ret
+    fi
 	echo "Install Prep"
 	su $PRIMARY_USER -c	"${CODE_DIRECTORY}/scripts/install_pre_orchestration.sh"
 	ret="$?"

@@ -8,19 +8,14 @@
   - name: Wait for system to become reachable
     wait_for_connection:
 
-  - name: Gather facts for first time
-    setup:
+#  - name: Gather facts for first time
+#    setup:
 
-  - name: run async yum update
-#    yum:
-#      name: "*"
-#      state: latest
-#      exclude: WALinuxAgent
-    command: >-
-      yum update -y --exclude WALinuxAgent
-    async: 2400
-#    poll: 0
-#    register: YUM_ASYNC
+#  - name: run async yum update
+#    command: >-
+#      yum update -y --exclude WALinuxAgent
+#    async: 2400
+
 
 # now create all of the directories needed for a sas install
 - hosts: sas-servers
@@ -54,6 +49,10 @@
         enabled: yes
         name: postfix.service
         state: started
+    - name: disable selinux prior to virk turning it off forever
+      shell:
+        cmd: |-
+          setenforce 0
 - hosts: CasControllerServers
   become: true
   tasks:

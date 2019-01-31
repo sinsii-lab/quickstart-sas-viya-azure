@@ -34,6 +34,8 @@
     },
     "SASAdminPass": {
       "type": "securestring",
+      "minLength": 6,
+      "maxLength": 255,
       "metadata": {
         "description": "Password of the SAS Admin Users (sasboot, optionally sasadmin). Must have at least 6 and no more than 255 characters."
       }

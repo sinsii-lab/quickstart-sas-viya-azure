@@ -16,8 +16,8 @@ This Quickstart is a reference architecture for users who want to deploy the SAS
 1. [Solution Summary](#Summary)
     1. [Costs and Licenses](#Costs)
 1. [Prerequisites](#Prerequisites)
-    1. [Create a Mirror Repository](#Mirror)
     1. [Upload the License .ZIP file](#License)
+    1. [Create a Mirror Repository](#Mirror
 1. [Deployment Steps](#Deployment)
 1. [Optional Post-Deployment](#Post-Deployment)
     1. [Configure a Certificate Authority-Signed Digital Certificate and Custom DNS Name](#DNS)
@@ -61,7 +61,7 @@ The SAS Viya Quickstart Template for Azure creates 3 instances, including:
 
 The available licensed core sizes are: 
 
-| Licensed Cores  | Virtual Machine SKU| Memory(RAM) | Maximum Dataset Size | Cache Size |
+| Licensed Cores  | Virtual Machine| SKU	Memory(RAM) | Maximum Dataset Size | Cache Size |
 | ------------- | ------------- | ------------- | ------------- | ------------- |
 |4  | Standard_E8s_v3   | 64 GB  | 20-40 GB	  |128 GB  |
 | 8 | Standard_E16s_v3  | 128 GB  |20-40 GB	  |256 GB  |
@@ -82,12 +82,29 @@ Before deploying SAS Viya Quickstart Template for Azure, you must have the follo
 *  Verification that your file uploads meet the limits of the Application Gateway.  For details on limits, see 
 ["Application Gateway limits."](https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits?toc=%2fazure%2fapplication-gateway%2ftoc.json#application-gateway-limits)
 
+<a name="License"></a>
+### Upload the License .ZIP file to a Microsoft Azure Blob
+When you run the deployment, you will need the blob Shared Access Signature (SAS) URL as a parameter. 
+
+Before you run the deployment:
+1. Upload the license file to Azure Blob Storage.  Follow the Microsoft Azure instructions to 
+["Create a Container"](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-portal#create-a-container) and 
+["Upload a Block Blob."](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-portal#upload-a-block-blob)
+
+2. Create a Shared Access signature (SAS) token. Follow these steps to create a Service SAS: 
+    * Navigate to the license file blob and select Generate SAS, then click Generate blob SAS token and URL.
+    * Make a note of the blob SAS URL for use during deployment.
+    
+For details, see ["Using Shared Access Signatures."](https://docs.microsoft.com/en-us/azure/storage/common/storage-dotnet-shared-access-signature-part-1)
+
 <a name="Mirror"></a>
 ### (Optional) Create a Mirror Repository 
 For your repository, you can either:
 * Use the default method, which downloads the install files directly from SAS.
 * Upload an entire mirror to Azure blob storage.
 * Compress the folder and upload to an Azure blob or another storage location that is secure.
+ 
+**Note** For the mirror storage, use the same storage account that you used for the license file in ["Upload the License Zip file."](#license)
 
 To use a mirror repository, you create a mirror repository as documented in ["Create a Mirror Repository"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p1ilrw734naazfn119i2rqik91r0.htm&docsetVersion=3.4&locale=en) in the SAS Viya 3.4 for Linux: Deployment Guide.  
 
@@ -108,20 +125,7 @@ az storage blob upload-batch --account-name "$STORAGE_ACCOUNT" --account-key "$S
 2. Upload the compressed tar archive to Azure blob storage or another storage location that is accessible from the Internet and can be secured. 
 3. During deployment, set the DeploymentMirror parameter to the authenticated URL. In the case of blob storage, the URL is the path URL to the blob that is qualified by a SAS key.
 
-<a name="License"></a>
-### Upload the License .ZIP file to a Microsoft Azure Blob and Getting a SAS URI
-When you run the deployment, you will need the blob Shared Access Signature (SAS) URL as a parameter. 
 
-Before you run the deployment:
-1. Upload the license file to Azure Blob Storage.  Follow the Microsoft Azure instructions to 
-["Create a Container"](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-portal#create-a-container) and 
-["Upload a Block Blob."](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-portal#upload-a-block-blob)
-
-2. Create a Shared Access signature (SAS) token. Follow these steps to create a Service SAS: 
-    * Navigate to the license file blob and select Generate SAS, then click Generate blob SAS token and URL.
-    * Make a note of the blob SAS URL for use during deployment.
-    
-For details, see ["Using Shared Access Signatures."](https://docs.microsoft.com/en-us/azure/storage/common/storage-dotnet-shared-access-signature-part-1)
 
 <a name="Deployment"></a>
 ## Deployment Steps
@@ -153,7 +157,8 @@ To access an existing data source from your SAS Viya deployment, add an inbound 
 * If you have peered the virtual network, add a rule to Allow the private subnet CIDR range for the SAS Viya network. (By default, 10.0.127.0/24). For details, see 
  ["Virtual network peering."](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-peering-overview)
  
-Data sources accessed through SAS/ACCESS should use the [SAS Data Agent for Linux Deployment Guide](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=p06vsqpjpj2motn1qhi5t40u8xf4.htm&docsetVersion=2.3&locale=en) instructions to  ["Configure Data Access"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.4&locale=en) and ["Validate the Deployment."](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=n18cthgsfyxndyn1imqkbfjisxsv.htm&docsetVersion=3.4&locale=en)
+* If you access data sources through SAS/ACCESS, follow the instructions in ["Set Up SAS Data Agent."](#DataAgent)
+
 
 <a name="ACCESSCertWarn"></a>
 ### Validate the Server Certificate if Using SAS/ACCESS
@@ -313,7 +318,10 @@ ________________________________________
     
       Note: The DNS of the SAS Viya endpoint is the value of the SASDrive output parameter, without the " prefix and the "/SASDrive" suffix.
 
-8. Validate the environment, including round-trip communication. For details, see the "Validation" chapter of the [SAS Data Agent for Linux Deployment Guide.](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=n1v7mc6ox8omgfn1qzjjjektc7te.htm&docsetVersion=2.3&locale=en )
+8. To access the data sources through SAS/ACCESS, use the ["Configure Data Access"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.4&locale=en)
+in the [SAS Data Agent for Linux Deployment Guide](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=p06vsqpjpj2motn1qhi5t40u8xf4.htm&docsetVersion=2.3&locale=en).
+
+9. Validate the environment, including round-trip communication. For details, see the ["Validation"](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=n1v7mc6ox8omgfn1qzjjjektc7te.htm&docsetVersion=2.3&locale=en ) chapter of the [SAS Data Agent for Linux Deployment Guide.](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=n1v7mc6ox8omgfn1qzjjjektc7te.htm&docsetVersion=2.3&locale=en )
 
 <a name="Usage"></a>
 ## Usage 

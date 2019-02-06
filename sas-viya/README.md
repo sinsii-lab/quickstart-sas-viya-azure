@@ -268,7 +268,7 @@ CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
     sudo yum install -y nc
     nc -v -z  <DNS-of-SAS-Viya-endpoint> 443
    ``` 
-   If the output from the nc command contains "Ncat: Connected to <IP_address:44>", the connection was successful.
+   If the output from the nc command contains "Ncat: Connected to <IP_address:443>", the connection was successful.
    
 4. To allow access from your SAS Viya network, open the firewall of the SAS Data Agent Environment. You can either:
     * Add a public IP address to both the controller and services VMs and allow port 443 from the public IPs of your install. In this case, a Static IP using the "Standard" SKU is recommended. For details, see ["Create, change, or delete a public IP address."](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-public-ip-address) 
@@ -281,7 +281,7 @@ CryptoLibName=/usr/lib64/libcrypto.so.1.0.2k
     nc -v -z  <IP-or-DNS-of-the-SAS-Data-Agent-host> 443
     ``` 
     
-   If the output from the nc command contains "Ncat: Connected to <IP_address:44>", the connection was successful.
+   If the output from the nc command contains "Ncat: Connected to <IP_address:443>", the connection was successful.
    
 6. Register the SAS Data Agent with the SAS Viya Environment. As the deployment vmuser, log into the Ansible controller VM and run the following from the /sas/install/setup/orchestration directory:
 

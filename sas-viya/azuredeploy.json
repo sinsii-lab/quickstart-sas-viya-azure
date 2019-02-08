@@ -37,14 +37,14 @@
       "minLength": 6,
       "maxLength": 255,
       "metadata": {
-        "description": "Password of the SAS Admin Users (sasboot, optionally sasadmin). Must have at least 6 and no more than 255 characters."
+        "description": "Password of the SAS Admin Users (sasboot, optionally sasadmin). Must have at least 6 and no more than 255 characters. Single quotes (') are not allowed."
       }
     },
     "SASUserPass": {
       "type": "securestring",
       "defaultValue": "",
       "metadata": {
-        "description": "Password of the default SAS User (sasuser). If left empty, no default users are created. (WARNING: If not set, deployment will require additional setup steps before it is usable)."
+        "description": "Password of the default SAS User (sasuser). If left empty, no default users are created. (WARNING: If not set, deployment will require additional setup steps before it is usable). Single quotes (') are not allowed."
       }
     },
     "DeploymentMirror": {

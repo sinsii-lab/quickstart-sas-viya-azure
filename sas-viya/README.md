@@ -26,7 +26,7 @@ This Quickstart is a reference architecture for users who want to deploy the SAS
     1. [Set Up ODBC and Microsoft SQL Server](#MSSQL)
     1. [Set Up SAS Data Agent](#DataAgent)
 1. [Usage](#Usage)
-1. [Troubleshooting](#Thoot)
+1. [Troubleshooting](#Tshoot)
 1. [Appendix A: Configuring the Identities Service](#AddA)
     1. [Verify Security Settings](#AddAVerify)
     1. [Create a Service Account](#AddACreateServiceAccount)

@@ -51,7 +51,7 @@
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "OPTIONAL: Specifies the https location of a sas mirror. Mirror should be in the form of a .tgz/.tar.gz file"
+        "description": "OPTIONAL: Specifies the https location of a SAS mirror. Mirror should be in the form of a .tgz/.tar.gz file or path to a mirror directory tree in blob storage."
       }
     },
     "_artifactsLocationSasToken": {

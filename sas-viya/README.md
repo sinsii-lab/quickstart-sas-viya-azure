@@ -7,9 +7,9 @@
 
 This README for  SAS Viya Quickstart Template for Azure is used to deploy the following SAS Viya products in the Azure cloud:
 
-* SAS Visual Analytics 8.3 on Linux
-* SAS Visual Statistics 8.3 on Linux
-* SAS Visual Data Mining and Machine Learning 8.3 on Linux
+* SAS Visual Analytics 8.3.1 on Linux
+* SAS Visual Statistics 8.3.1 on Linux
+* SAS Visual Data Mining and Machine Learning 8.3.1 on Linux
 
 This Quickstart is a reference architecture for users who want to deploy the SAS platform, using microservices and other cloud-friendly technologies. By deploying the SAS platform in Azure, you get SAS analytics, data visualization, and machine-learning capabilities in an Azure-validated environment. 
 ## Contents
@@ -38,7 +38,11 @@ This Quickstart is a reference architecture for users who want to deploy the SAS
     1. [Add a User](#AddBAddUser)
     1. [Change or Set a Password](#AddBPassword)
     1. [Delete a User](#AddBDeleteUser)
-
+1. [Appendix C: Security Considerations](#Security)
+    1. [	Network Security Groups ](#nsc)
+    1. [Hardening Provided OpenLDAP Security ](#hard)
+    1. [Data Security](#datasec)
+    1. [ Updating the Operating System](#updates)
 <a name="Summary"></a>
 ## Solution Summary
 By default, Quickstart deployments enable Transport Layer Security (TLS) for secure communication.
@@ -80,7 +84,7 @@ Before deploying SAS Viya Quickstart Template for Azure, you must have the follo
 		SAS Visual Statistics 8.3 on Linux
         SAS Visual Data Mining and Machine Learning 8.3 on Linux
 *  The license file in .zip format from your software order uploaded to an Azure blob
-*  Verification that your file uploads meet the limits of the Application Gateway.  For details about limits, see 
+*  Verification that your required SAS Viya file upload sizes do not exceed the limits of the Application Gateway. For details about limits, see 
 ["Application Gateway limits."](https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits?toc=%2fazure%2fapplication-gateway%2ftoc.json#application-gateway-limits)
 
 <a name="License"></a>
@@ -157,9 +161,8 @@ To access an existing data source from your SAS Viya deployment, add an inbound 
 
 * If you have peered the virtual network, add a rule to "Allow the private subnet CIDR range" for the SAS Viya network. (By default, 10.0.127.0/24). For details, see 
  ["Virtual network peering."](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-peering-overview)
- 
-* If you access data sources through SAS/ACCESS, follow the instructions in ["Set Up SAS Data Agent."](#DataAgent)
 
+Data sources accessed through SAS/ACCESS should use the [SAS Data Agent for Linux Deployment Guide](https://go.documentation.sas.com/?docsetId=dplydagent0phy0lax&docsetTarget=p06vsqpjpj2motn1qhi5t40u8xf4.htm&docsetVersion=2.3&locale=en) instructions to  ["Configure Data Access"](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=p03m8khzllmphsn17iubdbx6fjpq.htm&docsetVersion=3.4&locale=en) and ["Validate the Deployment."](https://go.documentation.sas.com/?docsetId=dplyml0phy0lax&docsetTarget=n18cthgsfyxndyn1imqkbfjisxsv.htm&docsetVersion=3.4&locale=en)
 
 <a name="ACCESSCertWarn"></a>
 ### Validate the Server Certificate if Using SAS/ACCESS
@@ -501,6 +504,43 @@ ldappasswd -h localhost -s USERPASSWORD -W -D cn=admin,dc=sasviya,dc=com -x "uid
 ```
 ldapdelete –h localhost -W -D "cn=admin,dc=sasviya,dc=com" "uid=newuser,ou=users,dc=sasviya,dc=com"
 ```
+<a name="Security"></a>
+## Appendix C Security Considerations
+
+<a name="nsc"></a>
+###	Network Security Groups 
+SAS Viya Quickstart for Azure uses the following network security groups to control access to the servers and load balancers from sources outside the virtual network. All server to server communication within the network is permitted.
+
+| Name   | Ingress Rules| Egress Rules | Servers/Load Balancers | Notes |
+| ------------- | ------------- | ------------- | ------------- | ------------- |
+|AnsibleController_NetworkSecurityGroup | Allow port 22/tcp from CIDR prefix specified in the "AdminIngressLocation" parameter.  Deny all others.    | Allow All | Ansible	  |Ansible/bastion server can be connected to through SSH only.  |
+| PrimaryViyaLoadbalancer_NetworkSecurityGroup | Allow port 443/tcp from CIDR prefix specified in the  "WebIngressLocation" parameter. Deny all others.  |	 Allow All  | PrimaryViyaLoadbalancer 	| The primary load balancer can only be connected to through https. |
+|AnsibleController_NetworkSecurityGroup  | Allow port 22/tcp from CIDR prefix specified in the "AdminIngressLocation" parameter. Deny all others.| Allow All  | Ansible |Ansible/bastion server can be connected to through SSH only.   |
+|PrimaryViyaLoadbalancer_NetworkSecurityGroup  | Allow port 443/tcp from CIDR prefix specified in the  "WebIngressLocation" parameter.  Deny all others. | Allow All  | PrimaryViyaLoadbalancer  |The primary load balancer can only be connected to through https.    |
+| Viya_NetworkSecurityGroup |	Deny All |	Allow All |Services Controller |	No external connections can be directly made to the Viya servers. 
+
+<a name="hard"></a>
+### Hardening Provided OpenLDAP Security 
+By default, the OpenLDAP provider that is set up if you provide a user password does not use TLS to secure the communications between the controller and the OpenLDAP server. Most connections should be authenticated by the OAuth provider in SASLogon, which communicates by loopback with the OpenLDAP server. In a production environment, it is recommended to enable TLS encryption for OpenLDAP queries. To enable LDAPS, refer to the
+ [ OpenLDAP documentation.](https://www.openldap.org/doc/admin24/tls.html)
+ 
+ <a name="datasec"></a>
+###		Data Security 
+The Quickstart deployment is built to get you up and running quickly. However, the deployment trades some security for the assurances that a large quantity of SAS licensed products can be loaded without issue. Before you load high-value data, it is recommended that you:
+* lock down the communication between the servers to allow only those ports that your licensed products are using 
+*  ensure that the user rights of created users are as minimal as necessary
+<a name="updates"></a>
+###  Updating the Operating System
+During installation, servers are updated through yum but will not automatically apply patches after deployment is complete. To apply patches either:
+* Schedule updates on the boxes through cron 
+* Regularly log on to the system and run a "yum update" command to keep security patches up to date on the operating system
+
+
+
+
+
+ 
+
 
 
 

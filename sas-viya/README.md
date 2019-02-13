@@ -80,9 +80,9 @@ Before deploying SAS Viya Quickstart Template for Azure, you must have the follo
 * Sufficient quota of at least 28 Cores, based on four licensed SAS cores
 * A SAS Software Order Confirmation Email that contains supported Quickstart products:
 
- 		SAS Visual Analytics 8.3 on Linux
-		SAS Visual Statistics 8.3 on Linux
-        SAS Visual Data Mining and Machine Learning 8.3 on Linux
+ 		SAS Visual Analytics 8.3.1 on Linux
+		SAS Visual Statistics 8.3.1 on Linux
+        SAS Visual Data Mining and Machine Learning 8.3.1 on Linux
 *  The license file in .zip format from your software order uploaded to an Azure blob
 *  Verification that your required SAS Viya file upload sizes do not exceed the limits of the Application Gateway. For details about limits, see 
 ["Application Gateway limits."](https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits?toc=%2fazure%2fapplication-gateway%2ftoc.json#application-gateway-limits)
@@ -509,12 +509,10 @@ ldapdelete –h localhost -W -D "cn=admin,dc=sasviya,dc=com" "uid=newuser,ou=use
 
 <a name="nsc"></a>
 ###	Network Security Groups 
-SAS Viya Quickstart for Azure uses the following network security groups to control access to the servers and load balancers from sources outside the virtual network. All server to server communication within the network is permitted.
+SAS Viya Quickstart for Azure uses the following network security groups to control access to the servers and load balancers from sources outside the virtual network. All server to server communication between subnets in the SAS Viya virtual network is permitted.
 
 | Name   | Ingress Rules| Egress Rules | Servers/Load Balancers | Notes |
 | ------------- | ------------- | ------------- | ------------- | ------------- |
-|AnsibleController_NetworkSecurityGroup | Allow port 22/tcp from CIDR prefix specified in the "AdminIngressLocation" parameter.  Deny all others.    | Allow All | Ansible	  |Ansible/bastion server can be connected to through SSH only.  |
-| PrimaryViyaLoadbalancer_NetworkSecurityGroup | Allow port 443/tcp from CIDR prefix specified in the  "WebIngressLocation" parameter. Deny all others.  |	 Allow All  | PrimaryViyaLoadbalancer 	| The primary load balancer can only be connected to through https. |
 |AnsibleController_NetworkSecurityGroup  | Allow port 22/tcp from CIDR prefix specified in the "AdminIngressLocation" parameter. Deny all others.| Allow All  | Ansible |Ansible/bastion server can be connected to through SSH only.   |
 |PrimaryViyaLoadbalancer_NetworkSecurityGroup  | Allow port 443/tcp from CIDR prefix specified in the  "WebIngressLocation" parameter.  Deny all others. | Allow All  | PrimaryViyaLoadbalancer  |The primary load balancer can only be connected to through https.    |
 | Viya_NetworkSecurityGroup |	Deny All |	Allow All |Services Controller |	No external connections can be directly made to the Viya servers. 

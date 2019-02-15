@@ -219,7 +219,7 @@
     - name: "Use mirror manager to download a copy of the mirror from sas"
       shell: |-
         set -o pipefail
-        "timeout -k 3660 3600 {{ ORCHESTRATION_MIRROR_MANAGER }}" mirror --deployment-data "{{ LICENSE_TEMP_LOCATION }}" --latest --platform x64-redhat-linux-6 --workers 20 -p "{{ LOCAL_DIRECTORY_MIRROR }}" -d 2>&1 | tee -a /tmp/viya_mirror_download.log
+        timeout -k 3660 3600 "{{ ORCHESTRATION_MIRROR_MANAGER }}" mirror --deployment-data "{{ LICENSE_TEMP_LOCATION }}" --latest --platform x64-redhat-linux-6 --workers 20 -p "{{ LOCAL_DIRECTORY_MIRROR }}" -d 2>&1 | tee -a /tmp/viya_mirror_download.log
       retries: 5
       delay: 10
       register: result

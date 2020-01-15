@@ -79,6 +79,8 @@
     "CAS Node Count": {
       "type": "int",
       "defaultValue": 1,
+      "minValue": 1,
+      "maxValue": 10,
       "metadata": {
         "description": "The number of CAS nodes in the deployment. If this is set to 1, an SMP environment is built with one CAS controller. If this is set to a value of 2 or more, an MPP environment is built (n workers + 1 controller). In the MPP environment case, you should shrink the size of the CAS controller as it will only be performing orchestration."
       }
@@ -649,7 +651,7 @@
           "imageReference": {
             "publisher": "RedHat",
             "offer": "RHEL",
-            "sku": "7.6",
+            "sku": "7.7",
             "version": "latest"
           },
           "osDisk": {
@@ -660,7 +662,7 @@
             "managedDisk": {
               "storageAccountType": "Premium_LRS"
             },
-            "diskSizeGB": 32
+            "diskSizeGB": 64
           }
         },
         "osProfile": {
@@ -1108,7 +1110,7 @@
           "imageReference": {
             "publisher": "RedHat",
             "offer": "RHEL",
-            "sku": "7.6",
+            "sku": "7.7",
             "version": "latest"
           },
           "osDisk": {
@@ -1119,7 +1121,7 @@
             "managedDisk": {
               "storageAccountType": "Premium_LRS"
             },
-            "diskSizeGB": 32
+            "diskSizeGB": 64
           },
           "dataDisks": [
             {
@@ -1260,7 +1262,7 @@
           "imageReference": {
             "publisher": "RedHat",
             "offer": "RHEL",
-            "sku": "7.6",
+            "sku": "7.7",
             "version": "latest"
           },
           "osDisk": {
@@ -1271,7 +1273,7 @@
             "managedDisk": {
               "storageAccountType": "Premium_LRS"
             },
-            "diskSizeGB": 32
+            "diskSizeGB": 64
           },
           "dataDisks": [
             {
@@ -1515,7 +1517,7 @@
           "imageReference": {
             "publisher": "RedHat",
             "offer": "RHEL",
-            "sku": "7.6",
+            "sku": "7.7",
             "version": "latest"
           },
           "osDisk": {
@@ -1526,7 +1528,7 @@
             "managedDisk": {
               "storageAccountType": "Premium_LRS"
             },
-            "diskSizeGB": 32
+            "diskSizeGB": 64
           },
           "dataDisks": [
             {

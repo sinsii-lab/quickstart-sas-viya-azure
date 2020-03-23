@@ -107,7 +107,7 @@ RETRIES=10
 DELAY=10
 COUNT=1
 while [ $COUNT -lt $RETRIES ]; do
-  git clone https://github.com/sassoftware/quickstart-sas-viya-common.git "${CODE_DIRECTORY}/common"
+  git clone https://github.com/al3x-ctrl/quickstart-sas-viya-common.git "${CODE_DIRECTORY}/common"
   if [ $? -eq 0 ]; then
     RETRIES=0
     break

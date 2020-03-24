@@ -69,11 +69,11 @@
                 "description": "This is the SKU for the Services VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks."
             }
         },
-		"Programming VM SKU": {
+		"spre VM SKU": {
             "type": "string",
             "defaultValue": "Standard_E8s_v3",
             "metadata": {
-                "description": "This is the SKU for the Programming VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks."
+                "description": "This is the SKU for the SPRE VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks."
             }
         },
         "Controller VM SKU": {
@@ -1587,7 +1587,7 @@
 		 {
             "comments": "The network interface of the ansible controller. This will be accessible to the public within the bounds of the security groups.",
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "Programming_NetworkInterface",
+            "name": "spre_NetworkInterface",
             "apiVersion": "2019-09-01",
             "location": "[parameters('location')]",
             "dependsOn": [
@@ -1629,18 +1629,18 @@
             }
         },
 		 {
-            "comments": "The programming server for this environment.",
+            "comments": "The spre server for this environment.",
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "programming",
+            "name": "spre",
             "apiVersion": "2019-07-01",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/networkInterfaces', 'Programming_NetworkInterface')]",
+                "[resourceId('Microsoft.Network/networkInterfaces', 'spre_NetworkInterface')]",
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('DiagnosticStorageGroupName'))]"
             ],
             "properties": {
                 "hardwareProfile": {
-                    "vmSize": "[parameters('Programming VM SKU')]"
+                    "vmSize": "[parameters('spre VM SKU')]"
                 },
                 "storageProfile": {
                     "imageReference": {
@@ -1651,7 +1651,7 @@
                     },
                     "osDisk": {
                         "osType": "Linux",
-                        "name": "programming_OsDisk_1",
+                        "name": "spre_OsDisk_1",
                         "createOption": "FromImage",
                         "caching": "ReadWrite",
                         "managedDisk": {
@@ -1662,7 +1662,7 @@
                     "dataDisks": [
                         {
                             "lun": 0,
-                            "name": "programmingOptDisk",
+                            "name": "spreOptDisk",
                             "createOption": "Empty",
                             "managedDisk": {
                                 "storageAccountType": "Premium_LRS"
@@ -1672,7 +1672,7 @@
                     ]
                 },
                 "osProfile": {
-                    "computerName": "programming",
+                    "computerName": "spre",
                     "adminUsername": "[variables('PrimaryUserName')]",
                     "linuxConfiguration": {
                         "disablePasswordAuthentication": true,
@@ -1689,7 +1689,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'Programming_NetworkInterface')]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'spre_NetworkInterface')]"
                         }
                     ]
                 },
@@ -1703,12 +1703,12 @@
             "resources": []
         },
         {
-            "name": "programming/ProgrammingStartup",
+            "name": "spre/spreStartup",
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "location": "[parameters('location')]",
             "apiVersion": "2019-07-01",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines', 'programming')]",
+                "[resourceId('Microsoft.Compute/virtualMachines', 'spre')]",
                 "[resourceId('Microsoft.Compute/virtualMachines', 'Ansible')]",
                 "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase1SetupHostForAnsible')]"
             ],

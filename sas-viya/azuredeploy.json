@@ -76,9 +76,9 @@
                 "description": "This is the SKU for the SPRE VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks."
             }
         },
-      "numSASWorkDisks": {
-      "type": "int",
-      "defaultValue": 2,
+     	 "numSASWorkDisks": {
+      	   "type": "int",
+      	"defaultValue": 2,
       "minValue": 2,
       "maxValue": 8,
       "metadata": {
@@ -93,7 +93,7 @@
       "metadata": {
         "description": "Size of the SAS work disks"
       }
-    }
+    },
         "Controller VM SKU": {
             "type": "string",
             "defaultValue": "Standard_E8s_v3",

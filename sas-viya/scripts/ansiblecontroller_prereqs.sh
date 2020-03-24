@@ -117,10 +117,10 @@ while [ $COUNT -lt $RETRIES ]; do
   sleep $DELAY
 done
 pushd "${CODE_DIRECTORY}/common"
-git checkout $COMMON_CODE_TAG
-set +e
-git checkout -b $COMMON_CODE_TAG
-set -e
+#git checkout $COMMON_CODE_TAG
+#set +e
+#git checkout -b $COMMON_CODE_TAG
+#set -e
 rm -rf .git* && popd
 
 #Now make the sharing structure

@@ -40,28 +40,7 @@
     - role: prepare_nodes/create_saswork_dir
   tags:
     - create_saswork_dir
-
-- name: Fix SAS work
-  hosts: [ProgrammingServicesServers]
-  become_user: root
-  become: yes
-  gather_facts: true
-  tasks:
-    - name: Recursively remove default SAS work directory
-      file:
-       path: /opt/sas/viya/config/var/tmp/compsrv/default
-       state: absent
-    - name: Create a symbolic link
-      file:
-       src: /sastmp/saswork
-       dest: /opt/sas/viya/config/var/tmp/compsrv/default
-       owner: root
-       group: root
-       state: link
-
-  tags:
-    - fix_saswork
-    
+   
 - name: Install Postfix
   hosts: [NeedPostFix]
   become_user: root

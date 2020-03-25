@@ -1677,17 +1677,21 @@
                         },
                         "diskSizeGB": 64
                     },
-                    "dataDisks": [
+                  "copy": [
                         {
-                            "lun": 0,
-                            "name": "spreOptDisk",
-                            "createOption": "Empty",
-                            "managedDisk": {
-                                "storageAccountType": "Premium_LRS"
-                            },
-                            "diskSizeGB": 256
+                            "name": "dataDisks",
+                            "count": "[add(parameters('numSasWorkDisks'),1)]",
+                            "input": {
+                                "caching": "ReadWrite",
+                                "diskSizeGB": "[if(equals(copyIndex('dataDisks'),0),256,parameters('sizeOfSasWorkDisksInGB'))]",
+                                "lun": "[copyIndex('dataDisks')]",
+                                "name": "[if(equals(copyIndex('dataDisks'),0),'spreOptDisk',concat('SASWork-disk-',copyIndex('dataDisks')))]",
+								"managedDisk": {
+                                 "storageAccountType": "Premium_LRS"
+								},
+                                "createOption": "Empty"
+                            }
                         }
-						
                     ]
                 },
                 "osProfile": {

@@ -76,7 +76,7 @@
                 "description": "This is the SKU for the SPRE VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks."
             }
         },
-		"numSasWorkDisks": {
+	  "numSasWorkDisks": {
       "type": "int",
       "defaultValue": 2,
       "minValue": 2,
@@ -101,6 +101,24 @@
                 "description": "This is the SKU for the Controller VM. The default SKU value represents the minimum recommended size for system stability in most SAS software license sets. The selected SKU must support premium disks."
             }
         },
+		"numCasCacheDisks": {
+      "type": "int",
+      "defaultValue": 2,
+      "minValue": 2,
+      "maxValue": 8,
+      "metadata": {
+        "description": "This parameter allows the user to select the number of CAS cache disks they want"
+      }
+    },
+    "sizeOfCasCacheDisksInGB": {
+      "type": "int",
+      "defaultValue": 256,
+      "minValue": 16,
+      "maxValue": 1024,
+      "metadata": {
+        "description": "Size of the CAS cache disks"
+      }
+    },
         "CAS Node Count": {
             "type": "int",
             "defaultValue": 1,
@@ -1136,17 +1154,22 @@
                         },
                         "diskSizeGB": 64
                     },
-                    "dataDisks": [
+                    "copy": [
                         {
-                            "lun": 0,
-                            "name": "controllerOptDisk",
-                            "createOption": "Empty",
-                            "managedDisk": {
-                                "storageAccountType": "Premium_LRS"
-                            },
-                            "diskSizeGB": 256
+                            "name": "dataDisks",
+                            "count": "[add(parameters('numCasCacheDisks'),1)]",
+                            "input": {
+                                "caching": "none",
+                                "diskSizeGB": "[if(equals(copyIndex('dataDisks'),0),256,parameters('sizeOfCasCacheDisksInGB'))]",
+                                "lun": "[copyIndex('dataDisks')]",
+                                "name": "[if(equals(copyIndex('dataDisks'),0),'controllerOptDisk',concat('CasCache-disk-',copyIndex('dataDisks')))]",
+								"managedDisk": {
+                                 "storageAccountType": "Premium_LRS"
+								},
+                                "createOption": "Empty"
+                            }
                         }
-                    ]
+                   ]
                 },
                 "osProfile": {
                     "computerName": "controller",
@@ -1682,7 +1705,7 @@
                             "name": "dataDisks",
                             "count": "[add(parameters('numSasWorkDisks'),1)]",
                             "input": {
-                                "caching": "ReadWrite",
+                                "caching": "none",
                                 "diskSizeGB": "[if(equals(copyIndex('dataDisks'),0),256,parameters('sizeOfSasWorkDisksInGB'))]",
                                 "lun": "[copyIndex('dataDisks')]",
                                 "name": "[if(equals(copyIndex('dataDisks'),0),'spreOptDisk',concat('SASWork-disk-',copyIndex('dataDisks')))]",

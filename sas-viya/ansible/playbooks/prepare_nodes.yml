@@ -63,7 +63,7 @@
     - fix_saswork
     
 - name: Install Postfix
-  hosts: [ViyaServicesServers]
+  hosts: [NeedPostFix]
   become_user: root
   become: yes
   gather_facts: true

@@ -90,8 +90,7 @@
     - MOUNT_DIR: "{{ USERLIB_DIR }}"
     - MOUNT_DISK: "{{ USERLIB_DISK }}"
 
-
-- name: Mount cas cache dir
+- name: Mount cas cache dir controller
   hosts: [CASControllerServer]
   become_user: root
   become: yes
@@ -109,5 +108,22 @@
     - MOUNT_DIR: "{{ CASCACHE_DIR }}"
     - MOUNT_DISK: "{{ CASCACHE_DISK }}"
 
+- name: Mount cas cache dir worker
+  hosts: [CASWorkers]
+  become_user: root
+  become: yes
+  gather_facts: true
+  roles:
+    - role: prepare_nodes/mount_cascache
+      # if no CASCACHE_DISK is given we assume emphemeral drives
+      when: CASCACHE_DISK | default() == ""
+    - role: prepare_nodes/mount_disk
+      # if CASCACHE_DISK is set, we mount it as usual
+      when: CASCACHE_DISK | default()
+  tags:
+    - mount_cascache
+  vars:
+    - MOUNT_DIR: "{{ CASCACHE_DIR }}"
+    - MOUNT_DISK: "{{ CASCACHE_DISK }}"
 
 

@@ -1193,6 +1193,32 @@
             },
             "resources": []
         },
+		{
+      "name": "controller/CASStartup",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[parameters('location')]",
+      "apiVersion": "2019-07-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', 'controller')]",
+        "[resourceId('Microsoft.Compute/virtualMachines', 'Ansible')]",
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase1SetupHostForAnsible')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "skipDos2Unix": false
+        },
+        "protectedSettings": {
+          "commandToExecute": "[ concat('set -o pipefail; ./nonansiblecontroller_prereqs.sh \"', variables('PrimaryUserName'), '\" \"', variables('DiagnosticStorageGroupName'), '\" \"', variables('AzureFilesViyaShare'), '\" \"', listKeys(variables('DiagnosticStorageGroupName'),'2019-06-01').keys[0].value,'\" \"CasControllerServers\" 2>&1 | tee /tmp/prerequisites.log')]",
+          "fileUris": [
+            "[concat(parameters('_artifactsLocation'), 'scripts/nonansiblecontroller_prereqs.sh', parameters('_artifactsLocationSasToken'))]"
+          ]
+        }
+      }
+    },
         {
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2019-09-01",

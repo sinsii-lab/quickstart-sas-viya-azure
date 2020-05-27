@@ -92,5 +92,5 @@ elif [[ "$SCRIPT_PHASE" -eq "9" ]]; then
 	cat "${CAS_URI_FILE}" |tr -d '\n'
 elif [[ "$SCRIPT_PHASE" -eq "10" ]]; then
 	echo "Installing Risk Modeling Content"
-	su $INSTALL_USER -c	"cd ${CODE_DIRECTORY}/content/RiskModeling_v03_2020/install; chmod 775 cli_wrapper.sh; ./cli_wrapper.sh -e $SASDrive -u sasboot -p $SASDrive -P ."
+	su $INSTALL_USER -c	"cd ${CODE_DIRECTORY}/content/RiskModeling_v03_2020/install; chmod 775 cli_wrapper.sh; ./cli_wrapper.sh -e $SASDrive -u sasadmin -p $ADMINPASS -P ."
 fi

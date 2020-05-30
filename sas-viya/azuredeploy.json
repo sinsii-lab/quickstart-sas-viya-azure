@@ -1042,6 +1042,38 @@
                 }
             }
         },
+		{
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "AnsiblePhase9InstallRiskContent",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase7PostViyaInstall')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('ExtensionAnsibleURI')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "vmName": {
+                        "value": "Ansible"
+                    },
+                    "commandToExecute": {
+                        "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"10\"  2>&1 | tee /var/log/sas/install/runAnsiblePhase9_installriskcontent.log')]"
+                    },
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    }
+                }
+            }
+        },
         {
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2019-09-01",

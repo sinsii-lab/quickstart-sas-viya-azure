@@ -1043,37 +1043,29 @@
             }
         },
 		{
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
-            "name": "AnsiblePhase9InstallRiskContent",
-            "dependsOn": [
-                "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase7PostViyaInstall')]"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('ExtensionAnsibleURI')]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "location": {
-                        "value": "[parameters('location')]"
-                    },
-                    "vmName": {
-                        "value": "Ansible"
-                    },
-                    "commandToExecute": {
-                        "value": "[concat('set -o pipefail; ./ansiblecontroller_startup.sh \"10\"  2>&1 | tee /var/log/sas/install/runAnsiblePhase9_installriskcontent.log')]"
-                    },
-                    "_artifactsLocation": {
-                        "value": "[parameters('_artifactsLocation')]"
-                    },
-                    "_artifactsLocationSasToken": {
-                        "value": "[parameters('_artifactsLocationSasToken')]"
-                    }
-                }
-            }
+      "name": "AnsiblePhase9RMContentInstall",
+      "type": "Microsoft.Resources/deployments",
+      "location": "[parameters('location')]",
+      "apiVersion": "2019-07-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase7PostViyaInstall')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "skipDos2Unix": false
         },
+        "protectedSettings": {
+          "commandToExecute": "[ concat('set -o pipefail; ./rmcontentinstall.sh \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', 'PrimaryViyaLoadbalancer_PublicIP')).dnsSettings.fqdn", '\" \"\" 2>&1 | tee /tmp/prerequisites.log')]",
+          "fileUris": [
+            "[concat(parameters('_artifactsLocation'), 'scripts/rmcontentinstall.sh', parameters('_artifactsLocationSasToken'))]"
+          ]
+        }
+      }
+    },
         {
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2019-09-01",

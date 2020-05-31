@@ -1042,8 +1042,8 @@
                 }
             }
         },
-		 {
-      "name": "AnsiblePhase9RMContentInstall",
+	{
+      "name": "content/AnsiblePhase9RMContentInstall",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "location": "[parameters('location')]",
       "apiVersion": "2019-07-01",

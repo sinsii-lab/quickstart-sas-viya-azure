@@ -1046,12 +1046,11 @@
       "name": "AnsiblePhase9RMContentInstall",
       "type": "Microsoft.Resources/deployments",
       "location": "[parameters('location')]",
-      "apiVersion": "2019-07-01",
+      "apiVersion": "2019-10-01",
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase7PostViyaInstall')]"
       ],
       "properties": {
-        "publisher": "Microsoft.Azure.Extensions",
         "type": "CustomScript",
         "typeHandlerVersion": "2.0",
         "autoUpgradeMinorVersion": true,

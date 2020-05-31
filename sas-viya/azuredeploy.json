@@ -1059,7 +1059,7 @@
           "skipDos2Unix": false
         },
         "protectedSettings": {
-          "commandToExecute": "[ concat('set -o pipefail; ./rmcontentinstall.sh \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', 'PrimaryViyaLoadbalancer_PublicIP')).dnsSettings.fqdn", '\" \"\" 2>&1 | tee /tmp/prerequisites.log')]",
+          "commandToExecute": "[ concat('set -o pipefail; ./rmcontentinstall.sh \"', variables('PrimaryUserName'),'\" \"', variables('Base64AdminPass'), '\" \"', reference(resourceId('Microsoft.Network/publicIPAddresses', 'PrimaryViyaLoadbalancer_PublicIP')).dnsSettings.fqdn, '\" \"\" 2>&1 | tee /tmp/prerequisites.log')]",
           "fileUris": [
             "[concat(parameters('_artifactsLocation'), 'scripts/rmcontentinstall.sh', parameters('_artifactsLocationSasToken'))]"
           ]

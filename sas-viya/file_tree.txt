@@ -403,7 +403,7 @@
 /content/RiskModeling_v03_2020/source/Promotion/smd/rmcr_promotion_zh_CN.smd|755
 /content/RiskModeling_v03_2020/source/Promotion/smd/rmcr_promotion_zh_HK.smd|755
 /content/RiskModeling_v03_2020/source/Promotion/smd/rmcr_promotion_zh_TW.smd|755
-/content/RiskModeling_v03_2020/source/VDMML Templates/samples/Template for credit conversion factor model.zip|755
-/content/RiskModeling_v03_2020/source/VDMML Templates/samples/Template for loss given default model.zip|755
-/content/RiskModeling_v03_2020/source/VDMML Templates/samples/Template for PD application scorecard.zip|755
-/content/RiskModeling_v03_2020/source/VDMML Templates/samples/Template for PD behavioral scorecard.zip|755
+/content/RiskModeling_v03_2020/source/VDMMLTemplates/samples/Template_for_credit_conversion_factor_model.zip|755
+/content/RiskModeling_v03_2020/source/VDMMLTemplates/samples/Template_for_loss_given_default_model.zip|755
+/content/RiskModeling_v03_2020/source/VDMMLTemplates/samples/Template_for_PD_application_scorecard.zip|755
+/content/RiskModeling_v03_2020/source/VDMMLTemplates/samples/Template_for_PD_behavioral_scorecard.zip|755

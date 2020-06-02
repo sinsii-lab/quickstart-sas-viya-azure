@@ -201,10 +201,22 @@
 "protocol": "TCP",
 "sourcePortRange": "*",
 "destinationPortRange": "443",
-"sourceAddressPrefix": "['parameters('WebIngressLocation')','reference('AnsibleController_PublicIP').ipAddress']",
+"sourceAddressPrefix": "[parameters('WebIngressLocation')]",
 "destinationAddressPrefix": "*",
 "access": "Allow",
 "priority": 1000,
+"direction": "Inbound"
+},
+{
+"name": "allow-https-from-controller",
+"properties": {
+"protocol": "TCP",
+"sourcePortRange": "*",
+"destinationPortRange": "443",
+"sourceAddressPrefix": "[reference('AnsibleController_PublicIP').ipAddress]",
+"destinationAddressPrefix": "*",
+"access": "Allow",
+"priority": 1010,
 "direction": "Inbound"
 }
 },

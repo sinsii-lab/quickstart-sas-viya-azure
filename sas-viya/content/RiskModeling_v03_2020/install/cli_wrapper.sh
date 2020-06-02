@@ -38,7 +38,7 @@ then
    echo "Some or all of the parameters are empty";
    helpFunction
 fi
-
+export SSL_CERT_FILE=/sas/install/setup/ssl/loadbalancer.crt.pem
 chmod 775 sas-risk-content-cli
 profileName="centos"
 ./sas-risk-content-cli --profile ${profileName} profile set-endpoint $apiEndPoint

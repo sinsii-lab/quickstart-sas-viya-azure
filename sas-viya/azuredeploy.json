@@ -201,7 +201,7 @@
 "protocol": "TCP",
 "sourcePortRange": "*",
 "destinationPortRange": "443",
-"sourceAddressPrefix": "[parameters('WebIngressLocation'),[reference('AnsibleController_PublicIP').ipAddress]]",
+"sourceAddressPrefix": "['parameters('WebIngressLocation')','reference('AnsibleController_PublicIP').ipAddress']",
 "destinationAddressPrefix": "*",
 "access": "Allow",
 "priority": 1000,

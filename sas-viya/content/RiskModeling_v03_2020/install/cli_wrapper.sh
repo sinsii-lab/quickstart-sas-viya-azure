@@ -38,11 +38,13 @@ then
    echo "Some or all of the parameters are empty";
    helpFunction
 fi
-export SSL_CERT_FILE=/sas/install/setup/ssl/loadbalancer.crt.pem
-chmod 775 sas-risk-content-cli
-profileName="centos"
+#chmod 775 sas-risk-content-cli
+profileName="~/.sas/config.json"
+export adminPassworddecoded=$(echo "$adminPassword" | base64 -di)
 ./sas-risk-content-cli --profile ${profileName} profile set-endpoint $apiEndPoint
 ./sas-risk-content-cli --profile ${profileName} profile set-output json
 ./sas-risk-content-cli --profile ${profileName} profile toggle-color y
-./sas-risk-content-cli --profile ${profileName} auth login --user $adminUser --password $adminPassword
+export SSL_CERT_FILE=/sas/install/setup/ssl/loadbalancer.crt.pem
+./sas-risk-content-cli --profile ${profileName} auth login --user $adminUser --password $adminPassworddecoded
 ./sas-risk-content-cli --profile ${profileName} content install --package-path $packagePath
+

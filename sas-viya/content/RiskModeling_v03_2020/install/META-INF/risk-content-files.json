@@ -1789,12 +1789,7 @@
             "filename": "Template for PD application scorecard", 
             "parentfolderid": "/Products/SAS Risk Modeling/Risk Modeling Content/v03.2020/VDMML Templates/samples", 
             "filepath": "../source/VDMMLTemplates/samples/Template_for_PD_application_scorecard.zip"
-        }, 
-        {
-            "filepath": "../source/VDMMLTemplates/samples/Template_for_PD_behavioral_scorecard.zip", 
-            "parentfolderid": "/Products/SAS Risk Modeling/Risk Modeling Content/v03.2020/VDMML Templates/samples", 
-            "filename": "Template for PD behavioral scorecard"
-        }, 
+        },  
         {
             "filename": "Template for credit conversion factor model", 
             "parentfolderid": "/Products/SAS Risk Modeling/Risk Modeling Content/v03.2020/VDMML Templates/samples", 

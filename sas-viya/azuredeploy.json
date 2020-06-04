@@ -1843,18 +1843,18 @@
             "properties": {}
         }
     ],
-    "outputs": {
-        "AnsibleControllerIP": {
-            "type": "String",
-            "value": "[reference('AnsibleController_PublicIP').ipAddress]"
-        },
-        "SASDrive": {
-            "type": "String",
-            "value": "[if(empty(parameters('DeploymentDataLocation')), 'A testing license string was provided instead of a valid license URI. Therefore, SAS was not actually installed. Please replace DeploymentDataLocation with a valid license URI. For further details, see the Troubleshooting section in the Readme.', concat('https://', reference('PrimaryViyaLoadbalancer_PublicIP').dnsSettings.fqdn, json(split(reference('AnsiblePhase8GetCASURIsFromLicense').outputs.instanceView.value.statuses[0].message, '#DATA#')[1]).SAS_DRIVE))]"
-        },
-        "SASStudio": {
-            "type": "String",
-            "value": "[if(empty(parameters('DeploymentDataLocation')), 'A testing license string was provided instead of a valid license URI. Therefore, SAS was not actually installed. Please replace DeploymentDataLocation with a valid license URI. For further details, see the Troubleshooting section in the Readme.', concat('https://', reference('PrimaryViyaLoadbalancer_PublicIP').dnsSettings.fqdn, json(split(reference('AnsiblePhase8GetCASURIsFromLicense').outputs.instanceView.value.statuses[0].message, '#DATA#')[1]).SAS_STUDIO))]"
-        }
-    }
+ "outputs": {
+    "AnsibleControllerIP": {
+       "type": "string",
+       "value": "[reference('AnsibleController_PublicIP').ipAddress]"
+     },
+    "SASDrive": {
+       "type": "string",
+       "value": "[if(empty(parameters('DeploymentDataLocation')), 'A testing license string was provided instead of a valid license URI. Therefore, SAS was not actually installed. Please replace DeploymentDataLocation with a valid license URI. For further details, see the Troubleshooting section in the Readme.', concat('https://', reference('PrimaryViyaLoadbalancer_PublicIP').dnsSettings.fqdn, json(split(reference('AnsiblePhase8GetCASURIsFromLicense').outputs.instanceView.value.statuses[0].message, '#DATA#')[1]).SAS_DRIVE))]"
+     },
+    "SASStudio": {
+       "type": "string",
+       "value": "[if(empty(parameters('DeploymentDataLocation')), 'A testing license string was provided instead of a valid license URI. Therefore, SAS was not actually installed. Please replace DeploymentDataLocation with a valid license URI. For further details, see the Troubleshooting section in the Readme.', concat('https://', reference('PrimaryViyaLoadbalancer_PublicIP').dnsSettings.fqdn, json(split(reference('AnsiblePhase8GetCASURIsFromLicense').outputs.instanceView.value.statuses[0].message, '#DATA#')[1]).SAS_STUDIO))]"
+     }
+  }
 }

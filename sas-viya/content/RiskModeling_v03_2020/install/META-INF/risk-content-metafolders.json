@@ -1,4 +1,11 @@
-{"metafolders":[{
+{"metafolders":[
+{
+	"name": "SAS Risk Modeling",
+	"description": "SAS Risk Modeling",
+	"folderType": "folder",
+	"parentFolderUri": "/Products"
+},
+{
 	"name": "Risk Modeling Content",
 	"description": "Risk Modeling Content",
 	"folderType": "folder",

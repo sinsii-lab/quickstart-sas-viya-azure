@@ -1060,7 +1060,7 @@
 "apiVersion": "2019-10-01",
 "name": "AnsiblePhase9InstallContent",
 "dependsOn": [
-"[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase7PostViyaInstall')]"
+"[resourceId('Microsoft.Resources/deployments', 'AnsiblePhase8GetCASURIsFromLicense')]"
 ],
 "properties": {
 "mode": "Incremental",

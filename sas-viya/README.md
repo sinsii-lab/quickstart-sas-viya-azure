@@ -579,7 +579,11 @@ By default, the OpenLDAP provider is set up if you provide a user password that 
  
  <a name="datasec"></a>
 ###		Data Security 
-Azure offers extensive data security functionality, which can be enabled as needed. More information will be available shortly.”
+The Quickstart deployment is built to get you "up and running" quickly. However, the deployment trades some security for the assurances that a large quantity of SAS licensed products can be loaded without issue. Before you load highly valuable data, it is recommended that you:
+* Lock down the communication between the servers to allow only those ports that your licensed products are using.
+*  Ensure that the user rights of created users are as minimal as possible.
+<a name="updates"></a>
+Azure offers extensive data security functionality, which can be enabled as needed. More information will be available shortly.
 ###  Updating the Operating System
 During installation, yum updates servers but will not automatically apply patches after deployment is complete. To apply patches either:
 * Schedule updates on the boxes through cron 

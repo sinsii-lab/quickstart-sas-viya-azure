@@ -18,6 +18,7 @@
 
 This README for  SAS Viya Quickstart Template for Azure is used to deploy the following SAS Viya products in the Azure cloud:
 
+* SAS Risk Modeling & Decisioning 8.1 on Linux
 * SAS Visual Analytics 8.5 on Linux
 * SAS Visual Statistics 8.5 on Linux
 * SAS Visual Data Mining and Machine Learning 8.5 on Linux

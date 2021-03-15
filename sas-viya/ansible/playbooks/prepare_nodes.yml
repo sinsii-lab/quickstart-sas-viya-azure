@@ -61,7 +61,7 @@
     - create_saswork_dir
    
 - name: Install Postfix
-  hosts: [NeedPostFix]
+  hosts: [ProgrammingServicesServers]
   become_user: root
   become: yes
   gather_facts: true

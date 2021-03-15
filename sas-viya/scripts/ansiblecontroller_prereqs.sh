@@ -103,12 +103,12 @@ fi
 ##
 ## get Common Code
 ##
-COMMON_CODE_TAG="002cbe7b3fdbc5474ea3f8cde7d2d3e6f5f4b3f4"
+COMMON_CODE_TAG="935901abb877e62a206d32d32d8aaafde6505f51"
 RETRIES=10
 DELAY=10
 COUNT=1
 while [ $COUNT -lt $RETRIES ]; do
-  git clone https://github.com/satishpandey123/quickstart-sas-viya-common.git "${CODE_DIRECTORY}/common"
+  git clone https://github.com/sassoftware/quickstart-sas-viya-common.git "${CODE_DIRECTORY}/common"
   if [ $? -eq 0 ]; then
     RETRIES=0
     break
@@ -118,10 +118,10 @@ while [ $COUNT -lt $RETRIES ]; do
   sleep $DELAY
 done
 pushd "${CODE_DIRECTORY}/common"
-#git checkout $COMMON_CODE_TAG
-#set +e
-#git checkout -b $COMMON_CODE_TAG
-#set -e
+git checkout $COMMON_CODE_TAG
+set +e
+git checkout -b $COMMON_CODE_TAG
+set -e
 rm -rf .git* && popd
 
 #Now make the sharing structure
